@@ -1,0 +1,27 @@
+---
+title: "ENM_FBaletaud"
+output: html_document
+---
+```{r include=FALSE }
+# knitr::opts_chunk$set(echo = FALSE)
+library(rmarkdown)
+library(knitr)
+library(dismo)
+library(raster)
+library(rgdal)
+library(ncdf4)
+
+```
+
+# Getting and formating environmental variables
+
+## Temperature
+
+```{r }
+read_chunk("./scripts/00_Environment_variables.R")
+
+```
+
+```{r readingData}
+
+```
