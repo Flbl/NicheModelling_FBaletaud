@@ -3,7 +3,7 @@ title: "ENM_FBaletaud"
 output: html_document
 ---
 ```{r include=FALSE }
-# knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE)
 library(rmarkdown)
 library(knitr)
 library(dismo)
@@ -13,15 +13,27 @@ library(ncdf4)
 
 ```
 
-# Getting and formating environmental variables
-
-## Temperature
-
-```{r }
+```{r}
 read_chunk("./scripts/00_Environment_variables.R")
 
 ```
 
-```{r readingData}
+
+# Getting and formating environmental variables
+
+## Temperature
+
+```{r temperature}
 
 ```
+
+## Sea floor geomorphology
+
+```{r seafloor}
+
+```
+
+
+
+
+

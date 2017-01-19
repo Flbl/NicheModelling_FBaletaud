@@ -1,0 +1,73 @@
+---
+title: "Blue Habitats layers"
+output: html_document
+---
+
+# Details of the different features
+
+The data was brought from the [blue habitat](http://www.bluehabitats.org/) website
+
+The details reviewed here can be found [here](http://www.bluehabitats.org/?page_id=1646)
+
+## Shelf classification
+
+### Low
+
+
+### Medium
+
+
+### High
+
+
+
+## Abyss
+
+### Plains
+
+### Hills
+
+### Mountains
+
+
+## Features (~ /importance)
+
+### Plateaus
+
+### Canyons
+
+### Guyots
+
+### Seamounts
+
+### Basins / Escarpments
+
+### Shelf Valleys
+
+### Ridges
+
+### Terraces
+
+### Trench
+
+### Troughs
+
+### Rises
+
+### bridges
+
+### Sills
+
+### Rift valleys
+
+### Spreading ridges
+
+### Fans
+
+
+
+
+## Coral
+
+
+
