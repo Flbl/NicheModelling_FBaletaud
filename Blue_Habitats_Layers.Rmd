@@ -1,5 +1,5 @@
 ---
-title: "Blue Habitats layers"
+title: "**Blue Habitats layers**"
 output: html_document
 ---
 
@@ -11,63 +11,162 @@ The details reviewed here can be found [here](http://www.bluehabitats.org/?page_
 
 ## Shelf classification
 
-### Low
+-The continental shelf is adjacent to a continent (or around an island) and extending from the low water line to a depth at which there is usually a marked increase of slope towards oceanic depths (IHO 2008)
+-Granitic crustal material, generally 20 to 550m water depth; commonly defined as 200m and the width of the shelf (2 to 450km) exhibit a wide variability
+-27 million km2
 
+Low : <10m depth
 
-### Medium
+Medium : 10 - 50 m depth
 
-
-### High
-
+High : >50 m depth
 
 
 ## Abyss
 
 ### Plains
 
+An extensive, flat, gently sloping or nearly level region at abyssal depths (IHO 2008).
+Abyssal plains are poorly developed or absent adjacent to active continental margins because the ocean trench systems intercept and subduct land-derived sediments into the earth’s mantle (eg. the North Pacific and the eastern South Pacific Oceans).
+
 ### Hills
+
+An isolated (or tract of) small elevation(s) on the deep seafloor (IHO 2008).
+They are abundant in the region between the mid-ocean ridge and the comparatively flat abyssal plains.
+
 
 ### Mountains
 
+Mountains on the seafloor at abyssal depths having a vertical relief of greater than 1,000 m within a search radius of ~25 km are termed “abyssl mountains” (Harris et al., 2014)
+They include discrete guyots, seamounts, ridges (classes that are superimposed over “mountains”) and other positive relief features.
 
 ## Features (~ /importance)
 
-### Plateaus
+Rocky seabeds may be associated with positive relief features (pinnacles, seamounts, guyots, ridges, escarpments, peaks, reefs, hills or mountains) or negative relief features (valleys, canyons, trenches, troughs, gullies, holes or deeps).  Among this assortment of positive and negative relief features, detailed biological surveys have focussed on seamounts and submarine canyons, which can be generalised and extrapolated to the two categories to a certain extent.
+
+### Slope
+
+The deepening sea floor out from the shelf edge to the upper limit of the continental rise, or the point where there is a general decrease in steepness (IHO, 2008).
+Strong ecotone between shelf and abyss
 
 ### Canyons
 
+steep-walled, sinuous valleys with V-shaped cross sections, axes sloping outward as continuously as river-cut land canyons and relief comparable to even the largest of land canyons (Shepard, 1963)
+
+The combination of steep rocky slopes, strong currents and enhanced access to food makes submarine canyons places of special ecological significance.  Canyons often are iconic, defining features of marine reserves in many locations because of their association with higher biomass and biodiversity.
+
+Canyons serve as conduits for terrigenous (land-derived) sediment derived from the continents to the deep ocean basins (Shepard, 1963)
+
+Oceanographically, canyons may affect local upwelling patterns and enhanced primary productivity which extends up the food chain to include birds and mammals (Hickey, 1995).  Consequently, commercially important pelagic and demersal fisheries as well as cetacean feeding grounds are commonly located at the heads of submarine canyons (Hooker et al., 1999).  The driving force behind the enhanced productivity is the upwelling and mixing of cold, nutrient-rich waters affected by canyon geomorphology interacting with ocean currents and internal waves. 
+
 ### Guyots
+
+An isolated (or group of) seamount (s) having a comparatively smooth flat top. Also called tablemount(s) (IHO, 2008).
 
 ### Seamounts
 
-### Basins / Escarpments
-
-### Shelf Valleys
+A discrete (or group of) large isolated elevation(s), greater than 1,000 m in relief above the sea floor, characteristically of *conical* form (IHO, 2008).
+length/with ratio <2
+Distinguished from flat-topped elevations (Guyots)
+High biodiversity : enhanced primary productivity over seamounts attracts migratory birds and pelagic species, such as sharks, tuna, billfishes and cetaceans. 
 
 ### Ridges
 
-### Terraces
+An isolated (or group of) elongated narrow elevation(s) of varying complexity having steep sides, often separating basin features”  (IHO 2008).
+In this study “ridges” were confined to features greater than 1,000 m in relief (i.e. they overlay the abyssal mountains classification layer).
+length/width ratio ≥2
+Larger than seamounts and less steep-sided
 
-### Trench
-
-### Troughs
-
-### Rises
-
-### bridges
-
-### Sills
-
-### Rift valleys
+Ridges are important ecologically because rocky substrates are rare in the ocean, covering perhaps ~10% or less of the total area of ocean floor and because they provide such a different habitat from sedimentary seabeds, they tend to support unique faunal communities.
 
 ### Spreading ridges
 
+Mid-ocean ridges. Majority doesn't attain sufficent vertical relief (>1000m)
+
+### Shelf Valleys
+
+Valleys incised more than 10 m into the continental shelf and greater than 10 km in length overall are mapped as shelf valleys.
+Features that intersected the shelf break and extended both onto the shelf and down-slope (where they become submarine canyons) were also included.
+The complexity of the seabed associated with incised shelf valleys (including rocky exposures along valley walls with soft sediments and sometimes bedforms on valley floors) gives rise to high biodiversity associated with these features.
+
+### Terraces
+
+An isolated (or group of) relatively flat horizontal or gently inclined surface(s), sometimes long and narrow, which is (are) bounded by a steeper ascending slope on one side and by a steeper descending slope on the opposite side” (IHO, 2008).
+
+Terraces are only mapped in this study on the continental slope.
+little is known about the biotic associations characteristic of most continental slope terrace features.
+Characterized by sand and gravel substrate with sparse benthos, there are localized exceptions.  For example, in Australia’s Great Barrier Reef, Beaman et al (2012) reported that smaller reef substrate pinnacles and scarps superimposed upon terraces are sites for dense patches of octocorals.
+
+
+### Plateaus
+
+Flat or nearly flat elevations of considerable areal extent, dropping off abruptly on one or more sides (IHO, 2008).
+Areas of flat ocean floor that are raised above the level of surrounding seafloor, delimited by a steep slope, are known as submarine plateaus.
+Abyssal zones at lesser depths
+Continental Shelf
+
+### Basins / Escarpments
+Basin : A depression, in the sea floor, more or less equidimensional in plan and of variable extent (IHO, 2008).
+
+Escarpments : Locally steep slopes ( ~ slope). areas of seafloor dipping at an angle of over 5 degrees
+
+### Rises
+
+Criteria for identification of continental rises include the occurrence of a smooth sloping seabed as indicated by evenly-spaced, slope-parallel contours (eg. Curray et al., 2002; Dowdeswell et al., 2008; Covault et al., 2011).
+
+### Trench
+
+A long narrow, characteristically very deep and asymmetrical depression of the sea floor, with relatively steep sides (IHO, 2008).
+
+### Troughs
+
+In geology, a trough is a linear structural depression that extends laterally over a distance, while being less steep than a trench.
+Narrow basin or geologic rift
+
+### bridges
+
+Bridge geomorphic features were first described by Gardner and Armstrong (2011) as blocks of material that partially infill the Mariana Trench in four locations, forming a “bridge” across the trench.  In this study we have extended Gardner and Armstrong’s (2011) interpretation and applied it to all troughs and trenches and have identified a number of bridge features that appear to partially infill trenches and troughs in the global ocean.  Slumping on the sides of some troughs and trenches has formed a bridge across the trench/trough, thereby dividing it into two separate sections
+
+### Sills
+
+A sea floor barrier of relatively shallow depth restricting water movement between basins (IHO, 2008).
+The identification of sills in this study is based on selecting contours at a specified interval of 10 m on the shelf (shelf except for Antarctica), 50 m (on the Antarctic shelf) or 100 m (all other areas).
+Sills can be a biogeographic barrier for species located in deep basins on either side. The basin environments are vastly different from the shallow water depths, high current energy, and warmer water temperature of the sill environment.
+
+### Rift valleys
+
+Rift valleys are confined to the central axis of mid-ocean spreading ridges; they are elongate, local depressions flanked generally on both sides by spreading ridges (Macdonald, 2001).
+
 ### Fans
 
-
+a relatively smooth, fan-like, depositional feature normally sloping away from the outer termination of a canyon or canyon system (IHO, 2008).
 
 
 ## Coral
 
+
+# References
+
+Beaman, R. J., Bridge, T., Done, T., Webster, J. M., Williams, S. and Pizarro, O. (2012) ‘Habitats and Benthos at Hydrographers Passage, Great Barrier Reef, Australia’, Seafloor Geomorphology as Benthic Habitat, (January), pp. 425–434. doi: 10.1016/B978-0-12-385140-6.00029-3.
+
+Covault , J.A., 2011. Submarine Fans and Canyon-Channel Systems: A Review of Processes, Products, and Models. Nature Education Knowledge 3, 893-894.
+
+Curray, J.R., Emmel, F.J., Moore, D.G., 2002. The Bengal Fan: morphology, geometry, stratigraphy, history and processes. Marine and Petroleum Geology 19, 1191–1223.
+
+Dowdeswell, J.A., Cofaigh, C., Noormets, R., Larter, R.D., Hillenbrand, C.D., Benetti, S., Evans, J., Pudsey, C.J., 2008. A major trough-mouth fan on the continental margin of the Bellingshausen Sea, West Antarctica: The Belgica Fan. Marine Geology 252, 129-140.
+
+Gardner, J.V., Armstrong, A.A., 2011. The Mariana Trench: A new view based on multibeam echosounding, American Geophysical Union, Fall Meeting 2011. American Geophysical Union, San Francisco.
+
+Harris, P.T., MacMillan-Lawler, M., Rupp, J., Baker, E.K., 2014. Geomorphology of the oceans. Marine Geology 352, 4-24.
+
+Hickey, B.M., 1995. Coastal submarine canyons., Topographic Effects in the Ocean: ‘Aha Huliko’a Hawaiian Winter Workshop, University of Hawaii at Manoa, Honolulu, HI, pp. 95-110.
+
+Hooker, S.K., Whitehead, H., Gowans, S., 1999. Marine protected area design and the spatial and temporal distribution of cetaceans in a submarine canyon. Conservation Biology 13, 592-602.
+
+Macdonald, K.C., 2001. Mid-ocean ridge tectonics, volcanism and geomorphology, Encyclopedia of Ocean Sciences. Elsevier Ltd., pp. 1798–1813.
+
+IHO, 2008. Standardization of Undersea Feature Names: Guidelines Proposal form Terminology, 4th ed. International Hydrographic Organisation and Intergovernmental Oceanographic Commission, Monaco, p. 32. 
+
+Shepard, F.P., 1963. Submarine Geology. Harper & Row, New York.
 
 
