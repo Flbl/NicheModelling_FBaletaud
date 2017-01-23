@@ -9,11 +9,11 @@ The data was brought from the [blue habitat](http://www.bluehabitats.org/) websi
 
 The details reviewed here can be found [here](http://www.bluehabitats.org/?page_id=1646)
 
-## Shelf classification
+## Continental shelf
 
--The continental shelf is adjacent to a continent (or around an island) and extending from the low water line to a depth at which there is usually a marked increase of slope towards oceanic depths (IHO 2008)
--Granitic crustal material, generally 20 to 550m water depth; commonly defined as 200m and the width of the shelf (2 to 450km) exhibit a wide variability
--27 million km2
+The continental shelf is adjacent to a continent (or around an island) and extending from the low water line to a depth at which there is usually a marked increase of slope towards oceanic depths (IHO 2008)
+Granitic crustal material, generally 20 to 550m water depth; commonly defined as 200m and the width of the shelf (2 to 450km) exhibit a wide variability
+27 million km2
 
 Low : <10m depth
 

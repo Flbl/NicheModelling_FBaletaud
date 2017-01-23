@@ -11,14 +11,32 @@ library(tools)
 
 ## @knitr temperature
 
-nc = nc_open(filename = "./Environment/METOFFICE-GLO-SST-L4-NRT-OBS-SST-MON-V2_1484923518762.nc")
+nc = nc_open(filename = "./Environment/temp/A20160012016366.L3m_YR_SST4_sst4_4km.nc")
 print(nc)
 # summary(nc)
 
-ncRas = raster("./Environment/METOFFICE-GLO-SST-L4-NRT-OBS-SST-MON-V2_1484923518762.nc", varname = "analysed_sst")
+ncRas = raster("./Environment/temp/A20160012016366.L3m_YR_SST4_sst4_4km.nc", varname = "sst4")
 ncRas
-plot(ncRas, main = "Analysed Sea Surface Temperature")
+plot(ncRas, main = "Sea Surface Temperature")
 
+## Temperature NC
+
+TNC = read.csv("./environment/temp/Temp_NC_clean.csv", sep = ";")
+head(TNC)
+TNC = TNC[,c(2,3,1)]
+
+TNCSpatial = SpatialPointsDataFrame(
+  coords = cbind(TNC$Longitude, TNC$Latitude),
+  data = TNC,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+)
+
+TNCSpatial
+TNCGrid = TNCSpatial
+gridded(TNCGrid) = TRUE
+TNCGrid = as(TNCGrid, "SpatialGridDataFrame")
+TNCras = raster(TNCGrid)
+TNCras = rasterize(TNCSpatial, TNCras)
 
 
 ## @knitr seafloor
@@ -50,3 +68,5 @@ Seamountsras = rasterize(Seamounts, field = "Geomorphic", Seamountsras)
 plot(Seamounts, add = TRUE)
 plot(Rift_valleys, add = TRUE)         
 plot(Plateaus, add = TRUE)
+
+
