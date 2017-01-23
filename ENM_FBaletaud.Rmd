@@ -10,7 +10,7 @@ library(dismo)
 library(raster)
 library(rgdal)
 library(ncdf4)
-
+library(rgbif)
 ```
 
 ```{r}
