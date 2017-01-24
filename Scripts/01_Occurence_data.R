@@ -106,12 +106,57 @@ worldmap + geom_point(data = my_occs,
 # Quality control
 
 glimpse(my_occs)
+# Getting an idea of the proportion of records with data for each field
 
+round(sort(apply(!is.na(my_occs), 2, mean)), 3)
 
-amblyObis$qcnum <- qcflags(amblyObis$qc, c(28))
-colors <- c("#ee3300", "#86b300")[sturgeon_data$qcnum + 1]
+table(my_occs$originalScientificName)
+
+# Filter by QCflags
+
+filter_by_QcFlags <- function(occ_dat, qc_var = "qc", qc_flags){
+  get_allon_ids <- function(qc_var, qc_flags) {
+    
+    mask <- 2^(qc_flags - 1)
+    qc_flags_on <- sapply(qc_var,function(x){sum(bitwAnd(x,mask) > 0)})
+    all_on <- which(qc_flags_on == length(qc_flags))
+    all_on
+  } 
+  
+  if(min(qc_flags, na.rm = TRUE) < 1 | max(qc_flags, na.rm = TRUE) >30 | !(class(qc_flags) %in% c("numeric","integer"))){
+    stop("Invalid values for qc_flags, must be integers in the range 1:30", call. = FALSE)
+  }
+  
+  
+  if(min(qc_flags, na.rm = T) < 1 | max(qc_flags, na.rm = T) > 30 |
+     !(class(qc_flags) %in% c("numeric", "integer"))){
+    stop("Invalid values for qc_flags, must be integers in the range 1:30",
+         call. = FALSE)
+  }
+  
+  
+  if(sum(c(8, 9, 20) %in% qc_flags) > 0){
+    stop("Flags 8, 9 and 20 are currently disabled and no records would be returned by your query",
+         call. = FALSE)
+  }
+  
+  if(qc_var != "qc"){occ_dat <- plyr::rename(occ_dat, setNames('qc', eval(qc_var)))}
+  id_all_on <- get_allon_ids(occ_dat$qc, qc_flags)
+  
+  occ_dat <- occ_dat[id_all_on, ]
+  
+  if(qc_var != "qc"){occ_dat <- plyr::rename(occ_dat, setNames(eval(qc_var), 'qc'))}
+  
+  return(occ_dat)
+}
+
+my_occs_filt = filter_by_QcFlags(my_occs, qc_flags = c(1:7, 11:15))
+nrow(my_occs) - nrow(my_occs_filt)
+
+my_occs$qcnum <- qcflags(my_occs$qc, c(28))
+colors <- c("#ee3300", "#86b300")[my_occs$qcnum + 1]
 
 leaflet() %>%
   addProviderTiles("CartoDB.Positron") %>%
-  addCircleMarkers(popup = paste0(amblyObis$datasetName, "<br/>", amblyObis$catalogNumber, "<br/><a href=\"http://beta.iobis.org/explore/#/dataset/", amblyObis$resourceID, "\">OBIS dataset page</a>"), data = data.frame(lat = amblyObis$decimalLatitude, lng = amblyObis$decimalLongitude), radius = 3.5, weight = 0, fillColor = colors, fillOpacity = 1)
+  addCircleMarkers(popup = paste0(my_occs$datasetName, "<br/>", my_occs$catalogNumber, "<br/><a href=\"http://beta.iobis.org/explore/#/dataset/", my_occs$resourceID, "\">OBIS dataset page</a>"), data = data.frame(lat = my_occs$decimalLatitude, lng = my_occs$decimalLongitude), radius = 3.5, weight = 0, fillColor = colors, fillOpacity = 1)
 
