@@ -15,7 +15,7 @@ library(rgbif)
 
 ```{r}
 read_chunk("./scripts/00_Environment_variables.R")
-
+read_chunk("./scripts/01_Occurence_data.R")
 ```
 
 
@@ -35,5 +35,10 @@ read_chunk("./scripts/00_Environment_variables.R")
 
 
 
+# Getting and cleaning biodiversity data
+
+```{r OBIS}
+
+```
 
 

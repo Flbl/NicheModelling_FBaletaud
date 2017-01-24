@@ -21,22 +21,30 @@ plot(ncRas, main = "Sea Surface Temperature")
 
 ## Temperature NC
 
-TNC = read.csv("./environment/temp/Temp_NC_clean.csv", sep = ";")
+TNC <- read.table("./environment/temp/Temp_NC_clean.csv" , sep = ";" , dec = "," , header = TRUE)
 head(TNC)
 TNC = TNC[,c(2,3,1)]
+TNCRast <- rasterFromXYZ(TNC)
+crs(TNCRast) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+plot(TNCRast)
 
-TNCSpatial = SpatialPointsDataFrame(
+
+
+
+TNCSpatial <- SpatialPointsDataFrame(
   coords = cbind(TNC$Longitude, TNC$Latitude),
   data = TNC,
   proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
 )
 
 TNCSpatial
-TNCGrid = TNCSpatial
-gridded(TNCGrid) = TRUE
-TNCGrid = as(TNCGrid, "SpatialGridDataFrame")
-TNCras = raster(TNCGrid)
-TNCras = rasterize(TNCSpatial, TNCras)
+TNCGrid <- TNCSpatial
+gridded(TNCGrid) <- TRUE
+TNCGrid <- as(TNCGrid, "SpatialGridDataFrame")
+TNCPix <- as(TNCGrid,"SpatialPixelsDataFrame")
+TNCRast <- raster(TNCPix)
+TNCras <- raster(TNCGrid)
+TNCras <- rasterize(TNCSpatial, TNCras)
 
 
 ## @knitr seafloor
