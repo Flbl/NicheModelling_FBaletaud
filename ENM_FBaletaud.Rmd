@@ -1,6 +1,7 @@
 ---
 title: "ENM_FBaletaud"
 output: html_document
+bibliography: stats.modelo1.bib
 ---
 ```{r include=FALSE }
 knitr::opts_chunk$set(echo = FALSE)
@@ -11,6 +12,22 @@ library(raster)
 library(rgdal)
 library(ncdf4)
 library(rgbif)
+library(taxize)
+library(taxizesoap)
+library(devtools)
+library(robis)
+library(leaflet)
+library(tibble)
+library(stringr)
+library(readr)
+library(pryr)
+library(marmap)
+library(lubridate)
+library(broom)
+library(mregions)
+library(rgeos)
+library(ggmap)
+
 ```
 
 ```{r}
@@ -23,13 +40,13 @@ read_chunk("./scripts/01_Occurence_data.R")
 
 ## Temperature
 
-```{r temperature}
+```{r temperature, eval=FALSE, include=FALSE}
 
 ```
 
 ## Sea floor geomorphology
 
-```{r seafloor}
+```{r seafloor, eval=FALSE, include=FALSE}
 
 ```
 
@@ -37,8 +54,52 @@ read_chunk("./scripts/01_Occurence_data.R")
 
 # Getting and cleaning biodiversity data
 
+
+
+Worldwide occurences are downloaded from the [OBIS database](http://www.iobis.org/) using the API through [robis](https://github.com/iobis/robis). The overall method is highly inspired from the OBIS news from Tom Webb [Extracting and Enriching OBIS Data with R](http://www.iobis.org/2016/11/22/sorbycollection/) (2016)
+
+The chunk used here first checks the name using [taxizesoap](https://github.com/ropensci/taxizesoap) which connects to the WoRMS database, a very well known authority in terms of taxonomy.
+
+OBIS aggregates automatically all the occurrences from the accepted names and the ones from the synonym. The collected data is directly filtered using the quality flags [@Vandepitte2015].
+
+
+
+## OBIS Dataset
+
 ```{r OBIS}
 
 ```
+
+
+
+## Manual check
+
+A manual check is proceeded by mapping the occurrences with the [leaflet package](https://rstudio.github.io/leaflet/). Different map styles can be used ([here](http://leaflet-extras.github.io/leaflet-providers/preview/))
+
+
+The ecoregion shape file from WWF is read and matched with occurences intersecting with the shape file.
+
+```{r Manualchk}
+
+```
+
+
+
+By zooming on the leaflet map, we could still witness points on land so they got removed.
+
+The specimen conserved at the National Taiwan Museum passed the Quality Control flags and the terrestrial control so we needed to remove it individualy
+
+
+
+## Merging OBIS data with NC data
+
+
+
+```{r mergeOccs}
+
+```
+
+
+# References
 
 
