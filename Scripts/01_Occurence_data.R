@@ -12,6 +12,7 @@ library(robis)
 library(leaflet)
 library(tibble)
 library(rgdal)
+library(dplyr)
 
 library(ggmap)
 library(dplyr)
@@ -72,76 +73,120 @@ print(my_sp_summ$records)
 
 print("Getting data through Quality Flags :")
 
-my_occs = occurrence(my_sp, qc = qc)
+OBIS_occs = occurrence(my_sp, qc = qc)
 
-assign("my_occs", my_occs, .GlobalEnv)
+assign("OBIS_occs", OBIS_occs, .GlobalEnv)
 
 }
-
 
 
 OBISSP("Carcharhinus amblyrhynchos")
 # OBISSP("Trianodon obesus")
 
+#######################################################
+
+
+# @knitr plotocc1
+
 # Plotting
 leaflet() %>%
   addProviderTiles("Esri.WorldImagery") %>%
-  addCircleMarkers(data = data.frame(lat = my_occs$decimalLatitude, lng = my_occs$decimalLongitude), radius = 3.5, weight = 0, fillColor = "orange", fillOpacity = 1)
+  addCircleMarkers(data = data.frame(lat = OBIS_occs$decimalLatitude, lng = OBIS_occs$decimalLongitude), radius = 3.5, weight = 0, fillColor = "orange", fillOpacity = 1)
 
 
-# @knitr Manualchk
+#######################################################
 
-
-# Removing points not in the oceans (using ecoregions shapefile)
-
-Ecoregion = readOGR(dsn = "./Environment/ecoregion/terEcorDissolved", layer = "terEcorDissolved")
-
-my_occs_spatial <- SpatialPointsDataFrame(
-  coords = cbind(my_occs$decimalLongitude, my_occs$decimalLatitude),
-  data = my_occs,
-  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
-
-is_occ_Marine <- !(gIntersects(my_occs_spatial,Ecoregion, byid = TRUE))
-
-my_occs = my_occs[is_occ_Marine == TRUE, ]
-
-# Plotting for verification
-leaflet() %>%
-  addProviderTiles("Esri.WorldImagery") %>%
-  addCircleMarkers(data = data.frame(lat = my_occs$decimalLatitude, lng = my_occs$decimalLongitude), radius = 3.5, weight = 0, fillColor = "orange", fillOpacity = 1)
-
-
-# Checking the datasets
-
-table(my_occs$datasetName)
-
-# Removing the National Taiwan Museum
-
-my_occs = my_occs[-which(my_occs$datasetName == "National Taiwan Museum"),]
-
-nrow(my_occs)
 
 # @knitr mergeOccs
 
 # Merging the occurrences from OBIS and New Caledonia dataset
 
 # Adding occurrence column to OBIS dataset
-my_occs$occurrence = 1
+OBIS_occs$occurrence = 1
 
 ## Reading/formatting the dataset
 NCRecords = read.table("./Biodiversity/dataset_fitted.csv", sep = ";", dec = ",", header = TRUE) 
 NC_occs <- NCRecords[,c(2,3,7)]
-NC_occs <- NC_occs[NC_occs$C_amblyrhynchos == "1",]
-colnames(NC_occs) <- c("decimalLatitude","decimalLongitude","occurrence")
+NC_occs <- NC_occs[NC_occs$C_amblyrhynchos >= "1",]
+colnames(NC_occs) <- c("decimalLatitude","decimalLongitude","individualCount")
+NC_occs$occurrence = 1
 
-head(NC_occs)
+
+# head(NC_occs)
 
 ## merge OBIS and NC
 
-my_occs_merged <- merge(my_occs, NC_occs, all = TRUE)
+Occs <- merge(OBIS_occs, NC_occs, all = TRUE)
 
 #Plot all the occurrences
 leaflet() %>%
   addProviderTiles("Esri.WorldImagery") %>%
-  addCircleMarkers(data = data.frame(lat = my_occs_merged$decimalLatitude, lng = my_occs_merged$decimalLongitude), radius = 3.5, weight = 0, fillColor = "orange", fillOpacity = 1)
+  addCircleMarkers(data = data.frame(lat = Occs$decimalLatitude, lng = Occs$decimalLongitude), radius = 3.5, weight = 0, fillColor = "orange", fillOpacity = 1)
+
+
+
+
+
+
+
+
+# @knitr Manualchk
+
+# Checking for same coordinates of points
+
+Occs = distinct(Occs, decimalLongitude, decimalLatitude, .keep_all = TRUE)
+
+
+# Double checking for points on earth using the bioclimatic grid
+
+## Reading/creating the earth GRID
+earthGrid<-nc_open("./environment/temp/global-analysis-forecast-phy-001-024.nc") # Open any nc file from the bioclimatic data used
+
+
+earthGrid<-ncvar_get(earthGrid,"thetao")
+# temp<-as.data.frame(temp)
+
+earthGrid[(is.na(earthGrid))]<-1000
+earthGrid[(earthGrid<1000)]<-NA
+earthGrid[(earthGrid == 1000)]<-1
+earthGrid<-earthGrid[,order(c(1:ncol(earthGrid)),decreasing=T)] # Inverting coordinates to replace them right
+
+# plot(temp)
+
+earthGrid <- raster(nrows = 2041, ncols = 4320, xmn = -180, xmx = 179.9167, ymn = -80, ymx = 90, crs="+proj=longlat +datum=WGS84", vals = as.vector(earthGrid)) # Check the coordinates of the frame on copernicus
+writeRaster(earthGrid, "./environment/temp/earthGrid-1-12.asc",overwrite=T)
+
+earthGrid = raster("./environment/temp/couche-1-12.asc")
+
+## Gridding the occurrence dataset
+
+
+
+
+## Multiplying the raster with the occurrence spatialpixelsdataframe
+
+
+
+
+# Plotting for verification
+leaflet() %>%
+  addProviderTiles("Esri.WorldImagery") %>%
+  addCircleMarkers(data = data.frame(lat = Occs$decimalLatitude[1718], lng = Occs$decimalLongitude[1718]), radius = 3.5, weight = 0, fillColor = "orange", fillOpacity = 1)
+
+
+# @knitr datasetname
+
+# Checking the datasets
+
+table(Occs$datasetName)
+
+# @knitr NTaiM
+
+# Removing the National Taiwan Museum
+
+Occs = Occs[-which(Occs$datasetName == "National Taiwan Museum"),]
+
+nrow(Occs)
+
+
 

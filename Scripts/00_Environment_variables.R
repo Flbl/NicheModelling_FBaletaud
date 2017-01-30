@@ -9,6 +9,8 @@ library(sp)
 library(ncdf4)
 library(tools)
 
+
+
 ## @knitr temperature
 
 nc = nc_open(filename = "./Environment/temp/A20160012016366.L3m_YR_SST4_sst4_4km.nc")
@@ -45,6 +47,20 @@ TNCPix <- as(TNCGrid,"SpatialPixelsDataFrame")
 TNCRast <- raster(TNCPix)
 TNCras <- raster(TNCGrid)
 TNCras <- rasterize(TNCSpatial, TNCras)
+
+
+
+## @knitr Terrest
+
+Region <-readOGR("./Environment/GSHHS_region","GSHHS_f_L1")
+
+RegionDissolved <- gUnionCascaded(Region)
+
+d <- data.frame(c(1))
+
+ecorDissolved <- SpatialPolygonsDataFrame(ecorDissolved,data=d)
+
+writeOGR(ecorDissolved, ".", "GSHHS_f_L1_dissolved", driver="ESRI Shapefile")
 
 
 ## @knitr seafloor

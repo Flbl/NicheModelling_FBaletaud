@@ -142,7 +142,7 @@ filter_by_QcFlags <- function(occ_dat, qc_var = "qc", qc_flags){
   
   
   if(sum(c(8, 9, 20) %in% qc_flags) > 0){
-    stop("Flags 7,8,9,16,20,25,26,27,28 are currently disabled and no records would be returned by your query",
+    stop("Flags 8,9,20 are currently disabled and no records would be returned by your query",
          call. = FALSE)
   }
   
@@ -165,7 +165,7 @@ centrofilt = data.frame(Long = mean(my_occs_filt$decimalLongitude), Lat = mean(m
 occ_map_filt = worldmap + geom_point(data = my_occs_filt, aes(x = decimalLongitude, y = decimalLatitude), colour = "darkorange", shape = 21, alpha = 2/3) + geom_point(data = centrofilt, aes(x = Long, y = Lat), colour = "red", shape = 21, alpha = 2/3)
 occ_map_filt
 
-# my_occs$qcnum = qcflags(my_occs$qc,c(1:7,10:19,21:30))
+my_occs$qcnum = qcflags(my_occs$qc,c(1:7,10:19))
 # colors <- c("#ee3300", "#86b300")[my_occs$qcnum + 1]
 # 
 # leaflet() %>%
@@ -173,6 +173,49 @@ occ_map_filt
 #   addCircleMarkers(popup = paste0(my_occs$datasetName, "<br/>", my_occs$catalogNumber, "<br/><a href=\"http://beta.iobis.org/explore/#/dataset/", my_occs$resourceID, "\">OBIS dataset page</a>"), data = data.frame(lat = my_occs$decimalLatitude, lng = my_occs$decimalLongitude), radius = 3.5, weight = 0, fillColor = colors, fillOpacity = 1)
 
 my_occs_new = occurrence(my_sp, qc = c(1:7,10:19,21:30))
+
+
+# Manual check
+
+# Removing points not in the oceans (using ecoregions shapefile)
+
+# Ecoregion = readOGR(dsn = "./Environment/ecoregion/terEcorDissolved", layer = "terEcorDissolved")
+# 
+# my_occs_spatial <- SpatialPointsDataFrame(
+#   coords = cbind(my_occs$decimalLongitude, my_occs$decimalLatitude),
+#   data = my_occs,
+#   proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+# 
+# is_occ_Marine <- !(gIntersects(my_occs_spatial,Ecoregion, byid = TRUE))
+# 
+# my_occs = my_occs[is_occ_Marine == TRUE, ]
+
+
+
+# Removing points not in the oceans (using GSHHRS)
+
+
+Region = readOGR(dsn = "./Environment/GSHHS_region", layer = "GSHHS_f_L1")
+
+my_occs_spatial <- SpatialPointsDataFrame(
+  coords = cbind(my_occs$decimalLongitude, my_occs$decimalLatitude),
+  data = my_occs,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+is_occ_Marine <- !(gIntersects(my_occs_spatial,Region, byid = TRUE))
+
+
+is_occ_Marine <- as.data.frame(is_occ_Marine)
+# col(is_occ_Marine)[which(is_occ_Marine==F)]
+is_occ_Marine1 = col(is_occ_Marine[,1:500])[which(is_occ_Marine[,1:500]==F)]
+is_occ_Marine2 = col(is_occ_Marine[,501:1000])[which(is_occ_Marine[,501:1000]==F)] + 500
+is_occ_Marine3 = col(is_occ_Marine[,1001:1729])[which(is_occ_Marine[,1001:1729]==F)] + 1000
+
+is_occ_Marine = c(is_occ_Marine1,is_occ_Marine2,is_occ_Marine3)
+
+my_occs = my_occs[-is_occ_Marine,]
+
+
 
 
 #Merging the environmental dataset with occurrence dataset

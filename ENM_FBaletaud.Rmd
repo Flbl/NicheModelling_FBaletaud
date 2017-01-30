@@ -55,29 +55,33 @@ read_chunk("./scripts/01_Occurence_data.R")
 # Getting and cleaning biodiversity data
 
 
-
-Worldwide occurences are downloaded from the [OBIS database](http://www.iobis.org/) using the API through [robis](https://github.com/iobis/robis). The overall method is highly inspired from the OBIS news from Tom Webb [Extracting and Enriching OBIS Data with R](http://www.iobis.org/2016/11/22/sorbycollection/) (2016)
+Worldwide occurences are downloaded from the [OBIS database](http://www.iobis.org/) using the API through [robis](https://github.com/iobis/robis). The overall method is highly inspired from the OBIS news of Tom Webb [Extracting and Enriching OBIS Data with R](http://www.iobis.org/2016/11/22/sorbycollection/) (2016).
 
 The chunk used here first checks the name using [taxizesoap](https://github.com/ropensci/taxizesoap) which connects to the WoRMS database, a very well known authority in terms of taxonomy.
 
-OBIS aggregates automatically all the occurrences from the accepted names and the ones from the synonym. The collected data is directly filtered using the quality flags [@Vandepitte2015].
-
-
 
 ## OBIS Dataset
+
+
+The function firstly checks the name of the species we've entered. Then rOBIS aggregates automatically all the occurrences from the accepted name and the ones from the synonym. The collected data is directly filtered using the quality flags [@Vandepitte2015].
+
 
 ```{r OBIS}
 
 ```
 
+The occurrences are mapped with the [leaflet package](https://rstudio.github.io/leaflet/), rendering an interactive zoomable map. Different map styles can be used from here (inside the code) ([here](http://leaflet-extras.github.io/leaflet-providers/preview/))
+
+```{r plotocc1}
+
+```
 
 
 ## Manual check
 
-A manual check is proceeded by mapping the occurrences with the [leaflet package](https://rstudio.github.io/leaflet/). Different map styles can be used ([here](http://leaflet-extras.github.io/leaflet-providers/preview/))
+A manual check is proceeded.
 
-
-The ecoregion shape file from WWF is read and matched with occurences intersecting with the shape file.
+One of the Obis quality flag (QC) consists in checking whether the occurence is in the ocean or earth. In order to be sure that no occurrences are defaulting, the ecoregion shape file from WWF is read and matched with occurences intersecting with the shape file to ensure marine only occurrences.
 
 ```{r Manualchk}
 
@@ -85,15 +89,32 @@ The ecoregion shape file from WWF is read and matched with occurences intersecti
 
 
 
-By zooming on the leaflet map, we could still witness points on land so they got removed.
+By zooming on the leaflet map, we witness that some points got removed. We can still see a point in the asian region very close to the shore. By zooming in, the satellital map show the occurrence in the middle of an urbanised zone.
 
-The specimen conserved at the National Taiwan Museum passed the Quality Control flags and the terrestrial control so we needed to remove it individualy
+
+The dataset names can be checked to assess where the data is coming from (Since the data already went through the quality flags, the datasets should be more than honorables, unless...)
+
+```{r datasetname}
+
+```
+
+
+The specimen conserved at the National Taiwan Museum passed the Quality Control flags and the terrestrial control while still being on land.
+
+
+The number of occurrences now from OBIs is showed below :
+
+```{r NTaiM}
+
+```
 
 
 
 ## Merging OBIS data with NC data
 
+The global data can now be merged with the regional data collected from the study area (New Caledonia). 
 
+The mapped result
 
 ```{r mergeOccs}
 
