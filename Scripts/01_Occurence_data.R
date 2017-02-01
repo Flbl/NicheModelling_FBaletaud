@@ -279,8 +279,10 @@ GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
   OBIS_occs = occurrence(my_sp, qc = qc)
   
-  print("Keeping only occurrences after 1990")
+  print("Keeping only occurrences after 1980")
   OBIS_occs = OBIS_occs[OBIS_occs$yearcollected >= 1980,]
+  
+  if (nrow(OBIS_occs) <= 2) stop("Not enough records")
   
   #assign(paste(substring(my_sp, 1,1), "_" ,unlist(strsplit(my_sp, " "))[2],"OBIS_occs", sep = "", collapse = ""), OBIS_occs, .GlobalEnv)
   
@@ -321,13 +323,13 @@ GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
   print("deleting coordinates duplicates")
   
-  Occs = Occs[-which(is.na(Occs$decimalLatitude)),]
+  if(any(is.na(Occs$decimalLatitude) & is.na(Occs$decimalLongitude))) Occs = Occs[-which(is.na(Occs$decimalLatitude) & is.na(Occs$decimalLongitude)),]
   
   Occs = distinct(Occs, decimalLongitude, decimalLatitude, .keep_all = TRUE)
   
   
   
-  print("adding 1 to rows without individual count (fisheries)")
+  print("replacing NA with 1 to rows without individual count (fisheries)")
   
   Occs[is.na(Occs$individualCount),3] <- 1
   
@@ -398,12 +400,20 @@ GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
   Occs <- Occs[-occ_terrest,]
   
+  # Adding the species name
+  Occs$species <- gsub(" ", "_",my_sp)
+  
   #my_sp_under <- gsub(" ", "_",my_sp)
   #assign(my_sp_under, Occs, .GlobalEnv)
   
   Occs
   
 }#eo GetCleanedOcc
+
+
+
+
+
 
 
 ## Reading/creating the earth GRID
@@ -428,10 +438,22 @@ earthRegion <- readOGR(dsn = "./Environment/GSHHS_region", layer = "GSHHS_f_L1")
 
 
 
-GetCleanedOcc("Galeocerdo_cuvier")
+test <- GetCleanedOcc("Galeocerdo_cuvier")
 
+ensemblecheck <- function(species){
+  
+  check <- lapply(species, checklist, qc = c(1:7,10:19,21:30))
+  
+  names(check) <- species
 
-species <- c("Carcharhinus_amblyrhynchos","Galeocerdo_cuvier","Nebrius_ferrugineus","Sphyrna_lewini")
+  check <- do.call(rbind,check) # -> rbind tous les tableaux de la liste
+  
+  check = data.frame(species = check$species, records = check$records)
+  
+  
+}
+
+species <- c("Carcharhinus amblyrhynchos","Galeocerdo cuvier","Nebrius ferrugineus","Sphyrna lewini")
 
 
 cleandOccs <- lapply(species,GetCleanedOcc)
@@ -440,7 +462,7 @@ names(cleandOccs) <- species
 
 cleandOccs[["Carcharhinus_amblyrhynchos"]] # <=> cleandOccs$Carcharhinus_amblyrhynchos
 
-# do.call(rbind,cleandOccs) # -> rbind tous les tableaux de la liste
+cleandOccsMerged <- do.call(rbind,cleandOccs) # -> rbind tous les tableaux de la liste
 
 # GetCleanedOcc("Carcharhinus_amblyrhynchos")
 # 
