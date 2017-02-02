@@ -30,6 +30,30 @@ library(rgeos)
 
 
 
+## Reading/creating the earth GRID a transformer en fonction
+
+earthGrid<-nc_open("./environment/temp/global-analysis-forecast-phy-001-024.nc") # Open any nc file from the bioclimatic data used
+
+
+earthGrid<-ncvar_get(earthGrid,"thetao")
+
+
+
+earthGrid[(is.na(earthGrid))]<-1000
+earthGrid[(earthGrid<1000)]<-NA
+earthGrid[(earthGrid == 1000)]<-1
+earthGrid<-earthGrid[,order(c(1:ncol(earthGrid)),decreasing=T)] # Inverting coordinates to replace them right
+
+earthGrid <- raster(nrows = 2041, ncols = 4320, xmn = -180, xmx = 179.9167, ymn = -80, ymx = 90, crs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0", vals = as.vector(earthGrid)) # Check the coordinates of the frame on copernicus
+
+earthRegion <- readOGR(dsn = "./Environment/GSHHS_region", layer = "GSHHS_f_L1")
+
+
+
+
+
+
+
 GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
   # CheckSp function
@@ -57,6 +81,7 @@ GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
   
   
+  
   # OBISSP function
   
   print("total number of records available")
@@ -73,6 +98,8 @@ GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   # if (nrow(OBIS_occs) <= 2) stop("Not enough records")
   
   #assign(paste(substring(my_sp, 1,1), "_" ,unlist(strsplit(my_sp, " "))[2],"OBIS_occs", sep = "", collapse = ""), OBIS_occs, .GlobalEnv)
+  
+  
   
   
   
@@ -109,6 +136,9 @@ GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
   
   
+  
+  
+  
   # Manual check of the dataset
   
   print("deleting coordinates duplicates")
@@ -117,15 +147,18 @@ GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
   Occs = distinct(Occs, decimalLongitude, decimalLatitude, .keep_all = TRUE)
   
-  
-  
   print("replacing NA with 1 to rows without individual count (fisheries)")
   
   Occs[is.na(Occs$individualCount),3] <- 1
   
-  
-  
   rownames(Occs) <- NULL # Reassign the rownames of NC_occs
+  
+  
+  
+  
+  
+  
+  
   
   # checking for points on earth using the bioclimatic grid
   
@@ -148,6 +181,7 @@ GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
   
   rownames(Occs) <- NULL # Reassign the rownames of Occs
+  
   
   
   
@@ -177,37 +211,93 @@ GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   # Adding the species name
   Occs$species <- gsub(" ", "_",my_sp)
   
+  
+  Occs
+  
+  
+}#eo GetCleanedOcc
 
+
+
+generateAbs <- function(Occs){
   
-  # Remove all but one occurrence per cell / convert occurrences to cells at 1/12
+  # Creating pseudo absences using IUCN range map outer limits
   
+  print("Getting IUCN data")
+  ## Generate auto paths to species shapefile
+  my_sp <- Occs$species[1]
+  
+  pathSp = paste("./biodiversity/iucn/", my_sp, sep = "", collapse = "")
+  
+  layerSp = sub(".shp", "", list.files(path = pathSp, full.names = FALSE, pattern = ".shp")[1])
+  
+  
+  ## Reading the shapefile of the species
+  iucn = readOGR(dsn = pathSp, layer = layerSp)
+  
+  
+  ## Converting to raster
+  rasIucnOccs <- raster(extent(iucn))
+  
+  res(rasIucnOccs) <- res(earthGrid)
+  
+  projection(rasIucnOccs) <- proj4string(iucn)
+  
+  rasIucnOccs <- rasterize(iucn, field = "PRESENCE", rasIucnOccs) # assigning 1 for cells within the range
+  
+  
+  
+}
+
+
+
+
+getCellsExtent = function(Occs){
+# Remove all but one occurrence per cell / convert occurrences to cells at 1/12
+
   occsSpatial = SpatialPointsDataFrame(
     coords = cbind(Occs$decimalLongitude, Occs$decimalLatitude),
     data = Occs,
     proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
-  
-  
+
+
   OccsRast <- raster(extent(earthGrid))
-  
+
   res(OccsRast) <- res(earthGrid)
-  
+
   projection(OccsRast) <- proj4string(occsSpatial)
-  
+
   OccsRast <- rasterize(occsSpatial,field = "occurrence", OccsRast)
-  
+
   coords = cbind(Occs$decimalLongitude, Occs$decimalLatitude)
-  
+
   Occs$cellNumber <- cellFromXY(OccsRast, coords)
-  
+
   OccsCells <- unique(Occs$cellNumber)
-  
+
   extOfCells <- lapply(lapply( X = OccsCells, rasterFromCells, x = OccsRast), extent)
-  
-  extOfCells[[1]]
-  
-  Occs
-  
-}#eo GetCleanedOcc
+
+  # extOfCells[[1]]
+
+  extOfCells
+
+}
+
+
+Camblycells_ext <- getCellsExtent(Occs)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Getting Occurrences through the IUCN shapefile of the species
@@ -257,23 +347,6 @@ Occs = merge(Occs, iucnOccs, all = TRUE)
 
 
 
-## Reading/creating the earth GRID a transformer en fonction
-
-earthGrid<-nc_open("./environment/temp/global-analysis-forecast-phy-001-024.nc") # Open any nc file from the bioclimatic data used
-
-
-earthGrid<-ncvar_get(earthGrid,"thetao")
-
-
-
-earthGrid[(is.na(earthGrid))]<-1000
-earthGrid[(earthGrid<1000)]<-NA
-earthGrid[(earthGrid == 1000)]<-1
-earthGrid<-earthGrid[,order(c(1:ncol(earthGrid)),decreasing=T)] # Inverting coordinates to replace them right
-
-earthGrid <- raster(nrows = 2041, ncols = 4320, xmn = -180, xmx = 179.9167, ymn = -80, ymx = 90, crs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0", vals = as.vector(earthGrid)) # Check the coordinates of the frame on copernicus
-
-earthRegion <- readOGR(dsn = "./Environment/GSHHS_region", layer = "GSHHS_f_L1")
 
 
 
@@ -287,6 +360,12 @@ cleanPAOccsCells <- function(Occs){
 
 
 rowColFromCell(ras, cellFromXY(ras, cbind(-82.8,35.2)))
+
+
+
+
+
+
 
 
 
