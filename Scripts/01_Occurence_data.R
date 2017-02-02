@@ -243,7 +243,11 @@ generateAbs <- function(Occs){
   
   projection(rasIucnOccs) <- proj4string(iucn)
   
+  origin(rasIucnOccs) <- origin(earthGrid)
+  
   rasIucnOccs <- rasterize(iucn, field = "PRESENCE", rasIucnOccs) # assigning 1 for cells within the range
+  
+  antiAbs <- merge(earthGrid, rasIucnOccs)
   
   
   
