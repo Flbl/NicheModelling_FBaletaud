@@ -76,6 +76,13 @@ The occurrences are mapped with the [leaflet package](https://rstudio.github.io/
 
 ```
 
+## IUCN dataset
+
+The IUCN data was recovered from the species range on their basemap (eg: [Galeocerdo Cuvier](http://maps.iucnredlist.org/map.html?id=39378)) under the "download Spatial data" link. The data provided is a shapefile. we converted it to a raster of bioclimatic grid resolution and extracted the centroid of each cell to generate "occurrences" from the species range.
+Once the data is collected, it is directly extracted inside the ./biodiversity/iucn folder.The folder extracted is named after the same zip file name : "species" collapsed with an IUCN number through an underscore. 
+This folder has to be renamed after the studied species with an underscore between Genus and species. (eg: Galeocerdo_cuvier). Inside that folder lie the whole SIG files needed along with the redlists pdf/readme files as metadata
+
+
 
 ## Manual check
 

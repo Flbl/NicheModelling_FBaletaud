@@ -221,3 +221,86 @@ my_occs = my_occs[-is_occ_Marine,]
 #Merging the environmental dataset with occurrence dataset
 # env_occ <- tbl_df(data.frame(extract(
   # env_grid, cbind(sole_occs_refined$decimalLongitude, sole_occs_refined$decimalLatitude), cellnumbers = T)))
+
+
+
+
+# Getting Occurrences through the IUCN shapefile of the species
+
+print("Getting IUCN data")
+## Generate auto paths to species shapefile
+my_sp <- gsub(" ", "_",my_sp)
+
+pathSp = paste("./biodiversity/iucn/", my_sp, sep = "", collapse = "")
+
+layerSp = sub(".shp", "", list.files(path = path, full.names = FALSE, pattern = ".shp")[1])
+
+
+## Reading the shapefile of the species
+iucn = readOGR(dsn = pathSp, layer = layerSp)
+
+
+## Converting to raster
+rasIucnOccs <- raster(extent(iucn))
+
+res(rasIucnOccs) <- res(earthGrid)
+
+projection(rasIucnOccs) <- proj4string(iucn)
+
+rasIucnOccs <- rasterize(iucn, field = "PRESENCE", rasIucnOccs) # assigning 1 for cells within the range
+
+## Converting each cells with occurrences to single points
+iucnOccs <- rasterToPoints(rasIucnOccs, fun = function(x){x==1}) # Converts each raster cell to a point of the centroids cells coordinates. spatial = TRUE to return a spatialpointsdataframe
+
+
+## Creating the dataset
+iucnOccs <- as.data.frame(iucnOccs)
+
+colnames(iucnOccs) <- c("decimalLongitude","decimalLatitude","individualCount")
+
+iucnOccs$occurrence = 1
+iucnOccs$datasetName <- "IUCN_RedList"
+
+
+
+# Merge Occs with iucnOccs
+print("merging previous occs with IUCN")
+
+Occs = merge(Occs, iucnOccs, all = TRUE)
+
+
+
+
+
+
+
+# ensemblecheck <- function(species){
+#   
+#   check <- lapply(species, checklist, qc = c(1:7,10:19,21:30))
+#   
+#   names(check) <- species
+# 
+#   check <- do.call(rbind,check) # -> rbind tous les tableaux de la liste
+#   
+#   check = data.frame(species = check$species, records = check$records)
+#   
+#   
+# }
+
+
+
+# is_occ_terrest_ids <- lapply(is_occ_terrest,function(x){
+#   
+#   cat(x,"\n")
+#   
+#   if(is.null(x)) return(NULL)
+#   
+#   id <- ((earthRegion@polygons)[[x]])@ID
+#   
+#   return(id)
+#   
+#   
+# })
+
+
+
