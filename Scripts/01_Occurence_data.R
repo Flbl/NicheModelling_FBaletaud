@@ -30,9 +30,9 @@ library(rgeos)
 
 
 
-## Reading/creating the earth GRID a transformer en fonction
+# Reading/creating the earth GRID a transformer en fonction
 
-earthGrid<-nc_open("./environment/temp/global-analysis-forecast-phy-001-024.nc") # Open any nc file from the bioclimatic data used
+earthGrid<-nc_open("./environment/temp/earthgrid/global-analysis-forecast-phy-001-024.nc") # Open any nc file from the bioclimatic data used
 
 
 earthGrid<-ncvar_get(earthGrid,"thetao")
@@ -380,19 +380,27 @@ getCellList <- function(cleandoccs){
 }
 
 
+
+# #2. create a function returning cell extent from cell number
+# getCellExtent <- function(cellList, raster = earthGrid){
+# 
+#   extOfCells <- lapply(lapply( X = cellList, rasterFromCells, x = raster), extent)
+# 
+#   names(extOfCells) <- cellList
+# 
+#   extOfCells
+# 
+# }#eo getCellExtent
+
+
 #2. create a function returning cell extent from cell number
-getCellExtent <- function(cellList, raster = earthGrid){
+getCellExtent <- function(cellID, raster = earthGrid){
   
-  extOfCells <- lapply(lapply( X = cellList, rasterFromCells, x = raster), extent)
-  
-  names(extOfCells) <- cellList
+  extOfCells <- extent(rasterFromCells(raster, cellID))
   
   extOfCells
   
 }#eo getCellExtent
-
-
-
 
 
 
@@ -401,30 +409,34 @@ getCellExtent <- function(cellList, raster = earthGrid){
 getCellTempData <- function(cellID){
   
   #out dir
-  patName <- paste0("./Environment/temp/rawData/",cellID)
+  patName <- paste0("/home/florian/Travail_FBaletaud/Environment/temp/rawData/",cellID)
   dir.create(patName)
-  outDir <- paste0(patName,"/") 
+  outDir <- paste0("D:\\Florian\\Documents\\Universite\\M1SBM\\Stage\\Travail_FBaletaud\\Environment\\temp\\rawData\\",cellID,"\\")
   
   #cell Extent
   cellExt <- getCellExtent(cellID)
   
   
-  cellID <- cellExt[[1]]
+  # cellID <- cellExt[[1]]
   
   #call python stuff
   
+  ### python.exe path
+  myPythonPath <- "D:\Florian\Documents\Universite\M1SBM\Stage\Python27\python.exe"
   
   ## sourcing the function
-  source("./Scripts/CMEMS3567_GLO_Daily_by_Month_R/getCMEMS.R")
+  source("D:/Florian/Documents/Universite/M1SBM/Stage/CMEMS3567_GLO_Daily_by_Month_R/getCMEMS.R")
   
   ## parameters
   
   ### motu-client.py path
-  motu_cl_lib <- "./Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/motu-client-python-master/src/python/motu-client.py"
+  motu_cl_lib <- "D:/Florian/Documents/Universite/M1SBM/Stage/Travail_FBaletaud/Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/motu-client-python-master/src/python/motu-client.py"
   
   
   ### call the function
-  getCMEMS(motu_cl = motu_cl_lib,
+  getCMEMS(scriptPath="D:/Florian/Documents/Universite/M1SBM/Stage/Travail_FBaletaud/Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/CMEMS3567_GLO_Daily_by_Month_CallFromR.py",
+          python=myPythonPath,
+           motu_cl = motu_cl_lib,
            log_cmems="fbaletaud",
            pwd_cmems="FlorianCMEMS2017",
            #Date
@@ -435,10 +447,10 @@ getCellTempData <- function(cellID){
            hh=" 12:00:00",
            dd="31",
            # Area 
-           xmin=cellID@xmin,
-           xmax=cellID@xmax,
-           ymin=cellID@ymin,
-           ymax=cellID@ymax,
+           xmin=as.character(cellExt@xmin),
+           xmax=as.character(cellExt@xmax),
+           ymin=as.character(cellExt@ymin),
+           ymax=as.character(cellExt@ymax),
            zmin="0.49", 
            zmax="0.50", 
            # Variables 
@@ -454,9 +466,11 @@ getCellTempData <- function(cellID){
   
 }#eo getCellTempData
 
+#test
+getCellTempData(cellList[1])
 
 
-
+lapply(cellList,getCellTempData)
 
 
 
