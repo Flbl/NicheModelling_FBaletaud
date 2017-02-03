@@ -227,13 +227,15 @@ getCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
   projection(OccsRast) <- proj4string(occsSpatial)
   
+  origin(OccsRast) <- origin(earthGrid)
+  
   OccsRast <- rasterize(occsSpatial,field = "occurrence", OccsRast)
   
   coords <- cbind(Occs$decimalLongitude, Occs$decimalLatitude)
   
   Occs$cellNumber <- cellFromXY(OccsRast, coords)
   
-  OccsCells <- unique(Occs$cellNumber)
+  
   
   
   return(Occs)
@@ -292,6 +294,8 @@ generateAbs <- function(Occs){
   
   # Sampling the cells with the length of OccCells in the cells exterior to IUCN range and earthGrid
   
+  OccsCells <- unique(Occs$cellNumber)
+  
   cat("sampling cells outside species range and earth\n")
   
   sampleClasses <- function(r, n)  {
@@ -336,26 +340,126 @@ getOccsAbs <- function(my_sp){
 }
 
 
-Cambly <- getOccsAbs("Carcharhinus_amblyrhynchos")
-
-CamblyAbs <- Cambly[[2]]
-
-
+# Cambly <- getOccsAbs("Carcharhinus_amblyrhynchos")
+# 
+# CamblyAbs <- Cambly[[2]]
 
 
-getCellsExtent = function(occs, abs){
+
+# 
+# getCellsExtent <- function(occs, abs){
+# 
+# 
+#   extOfCells <- lapply(lapply( X = OccsCells, rasterFromCells, x = OccsRast), extent)
+# 
+#   # extOfCells[[1]]
+# 
+#   extOfCells
+# 
+# }
+# 
+# 
+# Camblycells_ext <- getCellsExtent(Occs)
 
 
-  extOfCells <- lapply(lapply( X = OccsCells, rasterFromCells, x = OccsRast), extent)
 
-  # extOfCells[[1]]
 
-  extOfCells
+####################################
+# recup env pour les cellules eelctionnées
+####################################
+
+#1. obtenir une liste de cellules uniques
+
+getCellList <- function(cleandoccs){
+
+  cellAll <-    unlist(lapply(cleandOccs,function(x){c(x$occs$cellNumber, x$abs$cellNumber)}))
+  cellList <- unique(cellAll)
+
+  return(cellList)
 
 }
 
 
-Camblycells_ext <- getCellsExtent(Occs)
+#2. create a function returning cell extent from cell number
+getCellExtent <- function(cellList, raster = earthGrid){
+  
+  extOfCells <- lapply(lapply( X = cellList, rasterFromCells, x = raster), extent)
+  
+  names(extOfCells) <- cellList
+  
+  extOfCells
+  
+}#eo getCellExtent
+
+
+
+
+
+
+#3. function that download temp data for a cell
+
+getCellTempData <- function(cellID){
+  
+  #out dir
+  patName <- paste0("./Environment/temp/rawData/",cellID)
+  dir.create(patName)
+  outDir <- paste0(patName,"/") 
+  
+  #cell Extent
+  cellExt <- getCellExtent(cellID)
+  
+  
+  cellID <- cellExt[[1]]
+  
+  #call python stuff
+  
+  
+  ## sourcing the function
+  source("./Scripts/CMEMS3567_GLO_Daily_by_Month_R/getCMEMS.R")
+  
+  ## parameters
+  
+  ### motu-client.py path
+  motu_cl_lib <- "./Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/motu-client-python-master/src/python/motu-client.py"
+  
+  
+  ### call the function
+  getCMEMS(motu_cl = motu_cl_lib,
+           log_cmems="fbaletaud",
+           pwd_cmems="FlorianCMEMS2017",
+           #Date
+           yyyystart="2006",
+           mmstart="12",
+           yyyyend="2016",
+           mmend="12",
+           hh=" 12:00:00",
+           dd="31",
+           # Area 
+           xmin=cellID@xmin,
+           xmax=cellID@xmax,
+           ymin=cellID@ymin,
+           ymax=cellID@ymax,
+           zmin="0.49", 
+           zmax="0.50", 
+           # Variables 
+           table_var_cmd = "thetao",
+           table_data_type = "TEMP_",
+           # Output files 
+           out_path =  outDir, #Make sure to end your path with "/" 
+           pre_name= "CMEMS_GLO_001_024_")
+  
+  
+  
+  
+  
+}#eo getCellTempData
+
+
+
+
+
+
+
 
 
 
