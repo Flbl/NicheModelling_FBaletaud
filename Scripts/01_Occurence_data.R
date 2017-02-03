@@ -211,6 +211,30 @@ getCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   # Adding the species name
   Occs$species <- gsub(" ", "_",my_sp)
   
+  #Getting the nrow of unique cell number/cell with occurrence
+  # = Remove all but one occurrence per cell = convert occurrences to cells at 1/12
+  cat("Getting the cell numbers of occurrence\n")
+  
+  occsSpatial = SpatialPointsDataFrame(
+    coords = cbind(Occs$decimalLongitude, Occs$decimalLatitude),
+    data = Occs,
+    proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+  
+  
+  OccsRast <- raster(extent(earthGrid))
+  
+  res(OccsRast) <- res(earthGrid)
+  
+  projection(OccsRast) <- proj4string(occsSpatial)
+  
+  OccsRast <- rasterize(occsSpatial,field = "occurrence", OccsRast)
+  
+  coords <- cbind(Occs$decimalLongitude, Occs$decimalLatitude)
+  
+  Occs$cellNumber <- cellFromXY(OccsRast, coords)
+  
+  OccsCells <- unique(Occs$cellNumber)
+  
   
   return(Occs)
   
@@ -261,29 +285,7 @@ generateAbs <- function(Occs){
   
   
   
-  #Getting the nrow of unique cell number/cell with occurrence
   
-  cat("Getting the cell numbers of occurrence\n")
-  
-  occsSpatial = SpatialPointsDataFrame(
-    coords = cbind(Occs$decimalLongitude, Occs$decimalLatitude),
-    data = Occs,
-    proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
-  
-  
-  OccsRast <- raster(extent(earthGrid))
-  
-  res(OccsRast) <- res(earthGrid)
-  
-  projection(OccsRast) <- proj4string(occsSpatial)
-  
-  OccsRast <- rasterize(occsSpatial,field = "occurrence", OccsRast)
-  
-  coords = cbind(Occs$decimalLongitude, Occs$decimalLatitude)
-  
-  Occs$cellNumber <- cellFromXY(OccsRast, coords)
-  
-  OccsCells <- unique(Occs$cellNumber)
   
   
   
@@ -339,10 +341,10 @@ Cambly <- getOccsAbs("Carcharhinus_amblyrhynchos")
 CamblyAbs <- Cambly[[2]]
 
 
-getCellsExtent = function(Occs, Abs){
-# Remove all but one occurrence per cell / convert occurrences to cells at 1/12
 
-  
+
+getCellsExtent = function(occs, abs){
+
 
   extOfCells <- lapply(lapply( X = OccsCells, rasterFromCells, x = OccsRast), extent)
 
@@ -358,90 +360,15 @@ Camblycells_ext <- getCellsExtent(Occs)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Getting Occurrences through the IUCN shapefile of the species
-
-print("Getting IUCN data")
-## Generate auto paths to species shapefile
-my_sp <- gsub(" ", "_",my_sp)
-
-pathSp = paste("./biodiversity/iucn/", my_sp, sep = "", collapse = "")
-
-layerSp = sub(".shp", "", list.files(path = pathSp, full.names = FALSE, pattern = ".shp")[1])
-
-
-## Reading the shapefile of the species
-iucn = readOGR(dsn = pathSp, layer = layerSp)
-
-
-## Converting to raster
-rasIucnOccs <- raster(extent(iucn))
-
-res(rasIucnOccs) <- res(earthGrid)
-
-projection(rasIucnOccs) <- proj4string(iucn)
-
-rasIucnOccs <- rasterize(iucn, field = "PRESENCE", rasIucnOccs) # assigning 1 for cells within the range
-
-## Converting each cells with occurrences to single points
-iucnOccs <- rasterToPoints(rasIucnOccs, fun = function(x){x==1}) # Converts each raster cell to a point of the centroids cells coordinates. spatial = TRUE to return a spatialpointsdataframe
-
-
-## Creating the dataset
-iucnOccs <- as.data.frame(iucnOccs)
-
-colnames(iucnOccs) <- c("decimalLongitude","decimalLatitude","individualCount")
-
-iucnOccs$occurrence = 1
-iucnOccs$datasetName <- "IUCN_RedList"
-
-
-
-# Merge Occs with iucnOccs
-print("merging previous occs with IUCN")
-
-Occs = merge(Occs, iucnOccs, all = TRUE)
-
-
-
-
-
-
-
-
-
-
-rowColFromCell(ras, cellFromXY(ras, cbind(-82.8,35.2)))
-
-
-
-
-
-
-
-
-
-
+#####################################
 
 species <- c("Carcharhinus_amblyrhynchos","Carcharhinus_melanopterus","Triaenodon_obesus")
 
 
-cleandOccs <- lapply(species,GetCleanedOcc)
+cleandOccs <- lapply(species,getOccsAbs)
 
 names(cleandOccs) <- species
+
 
 cleandOccs[["Carcharhinus_amblyrhynchos"]] # <=> cleandOccs$Carcharhinus_amblyrhynchos
 
@@ -456,5 +383,5 @@ leaflet() %>%
   addCircleMarkers(data = data.frame(lat = Occs$decimalLatitude[21], lng = Occs$decimalLongitude[21]), radius = 3.5, weight = 0, fillColor = "orange", fillOpacity = 1)
 
 
-my_sp_under <- gsub(" ", "_",my_sp)
+
 
