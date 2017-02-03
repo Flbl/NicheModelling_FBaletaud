@@ -54,7 +54,7 @@ earthRegion <- readOGR(dsn = "./Environment/GSHHS_region", layer = "GSHHS_f_L1")
 
 
 
-GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
+getCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
   # CheckSp function
   checkSp <- gsub("_", " ",my_sp)
@@ -212,7 +212,7 @@ GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   Occs$species <- gsub(" ", "_",my_sp)
   
   
-  Occs
+  return(Occs)
   
   
 }#eo GetCleanedOcc
@@ -222,8 +222,8 @@ GetCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
 generateAbs <- function(Occs){
   
   # Creating pseudo absences using IUCN range map outer limits
+  print("Getting IUCN range map data")
   
-  print("Getting IUCN data")
   ## Generate auto paths to species shapefile
   my_sp <- Occs$species[1]
   
@@ -233,10 +233,14 @@ generateAbs <- function(Occs){
   
   
   ## Reading the shapefile of the species
+  cat("reading the IUCN shapefile\n")
+  
   iucn = readOGR(dsn = pathSp, layer = layerSp)
   
   
   ## Converting to raster
+  cat("Converting shapefile to raster\n")
+  
   rasIucnOccs <- raster(extent(iucn))
   
   res(rasIucnOccs) <- res(earthGrid)
@@ -247,37 +251,98 @@ generateAbs <- function(Occs){
   
   rasIucnOccs <- rasterize(iucn, field = "PRESENCE", rasIucnOccs) # assigning 1 for cells within the range
   
+  cat("merging earthGrid and IUCN rangemap raster\n")
+  
   antiAbs <- merge(earthGrid, rasIucnOccs)
   
+  # antiAbs[is.na(antiAbs)] <- 2
+  
+  antiAbs <- reclassify(antiAbs, cbind(NA,2)) # Assigning 2 for cells outside the range
+  
+  
+  
+  #Getting the nrow of unique cell number/cell with occurrence
+  
+  cat("Getting the cell numbers of occurrence\n")
+  
+  occsSpatial = SpatialPointsDataFrame(
+    coords = cbind(Occs$decimalLongitude, Occs$decimalLatitude),
+    data = Occs,
+    proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+  
+  
+  OccsRast <- raster(extent(earthGrid))
+  
+  res(OccsRast) <- res(earthGrid)
+  
+  projection(OccsRast) <- proj4string(occsSpatial)
+  
+  OccsRast <- rasterize(occsSpatial,field = "occurrence", OccsRast)
+  
+  coords = cbind(Occs$decimalLongitude, Occs$decimalLatitude)
+  
+  Occs$cellNumber <- cellFromXY(OccsRast, coords)
+  
+  OccsCells <- unique(Occs$cellNumber)
+  
+  
+  
+  
+  # Sampling the cells with the length of OccCells in the cells exterior to IUCN range and earthGrid
+  
+  cat("sampling cells outside species range and earth\n")
+  
+  sampleClasses <- function(r, n)  {
+    
+      cellVal <- which(t(as.matrix(r)) == 2) # get All cells for class 2 (=Abs)
+      
+      samples <- sample(cellVal, n) # sample class's cell number
+      
+      return(samples)
+    }
+    
+    
+  pseudoAbsCells <- sampleClasses(antiAbs, length(OccsCells))
+  
+  pseudoAbs <- as.data.frame(xyFromCell(antiAbs, pseudoAbsCells))
+  
+  colnames(pseudoAbs) <- c("decimalLongitude","decimalLatitude")
+  
+  pseudoAbs$CellNumber <- pseudoAbsCells
+  
+  pseudoAbs$species <- Occs$species[1]
+  
+  pseudoAbs
+
+  
+} # eo generateAbs
+
+
+
+
+getOccsAbs <- function(my_sp){
+  
+  cat("entering getcleanedOcc\n")
+  Occs <- getCleanedOcc(my_sp)
+  
+  cat("entering getOccsAbs\n")
+  Abs <-generateAbs(Occs)
+  
+  list(occs=Occs, abs=Abs)
   
   
 }
 
 
+Cambly <- getOccsAbs("Carcharhinus_amblyrhynchos")
+
+CamblyAbs <- Cambly[[2]]
 
 
-getCellsExtent = function(Occs){
+getCellsExtent = function(Occs, Abs){
 # Remove all but one occurrence per cell / convert occurrences to cells at 1/12
 
-  occsSpatial = SpatialPointsDataFrame(
-    coords = cbind(Occs$decimalLongitude, Occs$decimalLatitude),
-    data = Occs,
-    proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
-
-
-  OccsRast <- raster(extent(earthGrid))
-
-  res(OccsRast) <- res(earthGrid)
-
-  projection(OccsRast) <- proj4string(occsSpatial)
-
-  OccsRast <- rasterize(occsSpatial,field = "occurrence", OccsRast)
-
-  coords = cbind(Occs$decimalLongitude, Occs$decimalLatitude)
-
-  Occs$cellNumber <- cellFromXY(OccsRast, coords)
-
-  OccsCells <- unique(Occs$cellNumber)
+  
 
   extOfCells <- lapply(lapply( X = OccsCells, rasterFromCells, x = OccsRast), extent)
 
@@ -289,6 +354,9 @@ getCellsExtent = function(Occs){
 
 
 Camblycells_ext <- getCellsExtent(Occs)
+
+
+
 
 
 
@@ -353,13 +421,6 @@ Occs = merge(Occs, iucnOccs, all = TRUE)
 
 
 
-
-
-# Function to get occurrences cells and pseudo-absences cells
-
-cleanPAOccsCells <- function(Occs){
-  
-}
 
 
 
