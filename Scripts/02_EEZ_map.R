@@ -42,15 +42,11 @@ earthGrid[(earthGrid == 1000)]<-1
 
 
 
-earthGrid<-earthGrid[,order(c(1:ncol(earthGrid)),decreasing=T)] # Inverting coordinates to replace them right
+earthGrid<-earthGrid[,order(c(1:ncol(earthGrid)),decreasing=T)] # basicly Inverting coordinates to replace them right
 
 earthGrid <- raster(nrows = 2041, ncols = 4320, xmn = -180, xmx = 179.9167, ymn = -80, ymx = 90, crs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0", vals = as.vector(earthGrid)) # Check the coordinates of the frame on copernicus
 
 earthGrid <- reclassify(earthGrid, cbind(NA,2))
-
-
-earthRegion <- readOGR(dsn = "./Environment/GSHHS_region", layer = "GSHHS_f_L1")
-
 
 
 
@@ -63,12 +59,14 @@ eez <- readOGR(dsn = "./Environment/World_EEZ_v9_20161021", layer = "eez")
 eez[eez$PolygonID == 31,]
 eez[eez$PolygonID == 254,]
 
-eezNc1 <- eezNc[which(eez$PolygonID == 254 | eez$PolygonID == 31),]
+eezNcPoly <- eez[which(eez$PolygonID == 254 | eez$PolygonID == 31),]
 plot(earthGrid)
-plot(eezNc1, add = TRUE)
+plot(eezNcPoly, add = TRUE)
 
 # gintersect with only the New Caledonian polygons
-eezNc2 <- mask(earthGrid, eezNc1)
-eezNc2 <- crop(eezNc2, extent(eezNc1))
+eezNcGrid <- mask(earthGrid, eezNcPoly)
+eezNcGrid <- crop(eezNcGrid, extent(eezNcPoly))
 
+plot(eezNcGrid)
+plot(eezNcPoly, add = TRUE)
 
