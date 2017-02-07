@@ -85,8 +85,11 @@ plot(eezNcPoly, add = TRUE)
 
 
 
-shps = dir("./Environment/geomorph", "*.shp")
-shps = file_path_sans_ext(shps)
+shps <- dir("./Environment/geomorph", "*.shp")
+shps <- file_path_sans_ext(shps)
+
+shps <- shps[-c(2,17)]
+
 
 
 cropNc <- function(shp, cropNc = eezNcPoly){
@@ -101,20 +104,35 @@ cropNc <- function(shp, cropNc = eezNcPoly){
 
 croppedNcshp <- lapply(shps, cropNc)
 
+names(croppedNcshp) <- shps
+
+croppedNcshp[[1]]
+
+CoralShp = readOGR("./Environment/WCMC008_CoralReef2010_v1_3/01_Data", layer = "14_001_WCMC008_CoralReef2010_v1_3")
+
+CoralNc <- crop(CoralShp, extent(eezNcPoly))
+
+
+# eezCoralClip <- gIntersection(eezNcGrid, CoralNc, byid = TRUE) # Ne fonctionne pas en raster,polygons
+
+
+
 
 
 # Abyss <- cropNc("Abyss")
 # 
 # Abyssal_Classification <- cropNc("Abyssal_Classification")
 # 
+
 # Shelf_Classification <- cropNc("Shelf_Classification")
+
 # 
 # cropNc("Seamounts")
 # 
 # plot(Abyss)
 
 
-CoralShp = readOGR("./Environment/DataPack-14_001_WCMC008_CoralReef2010_v1_3/01_Data", layer = "14_001_WCMC008_CoralReef2010_v1_3")
+
 
 
 
