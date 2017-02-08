@@ -33,9 +33,7 @@ library(mregions)
 
 earthGrid<-nc_open("./Environment/temp/earthgrid/global-analysis-forecast-phy-001-024.nc") # Open any nc file from the bioclimatic data used
 
-
 earthGrid<-ncvar_get(earthGrid,"thetao")
-
 
 earthGrid[(is.na(earthGrid))]<-1000
 earthGrid[(earthGrid<1000)]<-NA
@@ -50,8 +48,9 @@ earthGrid <- reclassify(earthGrid, cbind(NA,2)) # 2 = ocean
 
 
 
-# read the eez shapefile and crop the NC eez
 
+
+# read the eez shapefile and crop the NC eez
 
 eez <- readOGR(dsn = "./Environment/World_EEZ_v9_20161021", layer = "eez")
 
@@ -61,38 +60,40 @@ eez[eez$PolygonID == 254,]
 
 eezNcPoly <- eez[which(eez$PolygonID == 254 | eez$PolygonID == 31),]
 
-# writeOGR(eezNcPoly, dsn = "./Miscellaneous", layer = "eezNcPoly", driver = "ESRI Shapefile")
 
-
-plot(earthGrid)
-plot(eezNcPoly, add = TRUE)
 
 
 # intersect earthGrid with only the New Caledonian polygons
+
 eezNcGrid <- mask(earthGrid, eezNcPoly)
 eezNcGrid <- crop(eezNcGrid, extent(eezNcPoly))
-
-# writeRaster(eezNcGrid, "./Miscellaneous/eezNcGrid.asc", overwrite = TRUE)
-
-plot(eezNcGrid)
-plot(eezNcPoly, add = TRUE)
+eezNcGrid <- reclassify(eezNcGrid, cbind(1,NA)) # NA = earth/outlimits
+eezNcGrid <- reclassify(eezNcGrid, cbind(2,1)) # 1 = Ocean
 
 
+# Converting to polygons 
 
-# Crop the geomorphic substrate
+eezNcPolyGrid <- as(eezNcGrid, "SpatialPolygons")
+
+eezNcPolyGrid$cellID <- c(1:length(eezNcPolyGrid))
+
+
+
+
+
+# Crop the geomorphic substrate and coral
 
 ## @knitr seafloor
-
 
 
 shps <- dir("./Environment/geomorph", "*.shp")
 shps <- file_path_sans_ext(shps)
 
-shps <- shps[-c(2,17)]
+shps <- shps[-c(2,17)] # Removing the classification layers and keeping the simple versions of Abyss and Shelf
 
+# Function to crop 
 
-
-cropNc <- function(shp, cropNc = eezNcPoly){
+cropNc <- function(shp, cropNc = eezNcPoly, PolyGrid = eezNcPolyGrid ){
   
   shp <- assign(shp, readOGR("./Environment/geomorph",layer = shp))
   
@@ -106,34 +107,45 @@ croppedNcshp <- lapply(shps, cropNc)
 
 names(croppedNcshp) <- shps
 
-croppedNcshp[[1]]
+croppedNcshp <- croppedNcshp[lapply(croppedNcshp, length)!=0]
+
+
+#Adding the coral
+
+## Crop the Coral 
 
 CoralShp = readOGR("./Environment/WCMC008_CoralReef2010_v1_3/01_Data", layer = "14_001_WCMC008_CoralReef2010_v1_3")
 
 CoralNc <- crop(CoralShp, extent(eezNcPoly))
 
 
-# eezCoralClip <- gIntersection(eezNcGrid, CoralNc, byid = TRUE) # Ne fonctionne pas en raster,polygons
+croppedNcshp$Coral <- CoralNc
+
+
+# Merging the features of the polygons to one polygon
+
+cropNcPoly <- function(shp, polyGrid = eezNcPolyGrid){
+  
+  shp <- gUnionCascaded(shp)
+  
+  shp <- gIntersection(eezNcPolyGrid, shp, byid = TRUE)
+  
+  shp
+  
+}
+
+croppedNcPoly <- lapply(croppedNcshp, cropNcPoly)
+
+croppedNcPoly <- croppedNcPoly[lapply(croppedNcPoly, length)!=0]
 
 
 
 
 
-# Abyss <- cropNc("Abyss")
-# 
-# Abyssal_Classification <- cropNc("Abyssal_Classification")
-# 
+# extract percentages of each polygons in each cells
 
-# Shelf_Classification <- cropNc("Shelf_Classification")
-
-# 
-# cropNc("Seamounts")
-# 
-# plot(Abyss)
-
-
-
-
+#Created polygons have an area saved
+#Need to find a way to associate the area of each polygon corresponding to a cell with the good cell ID from eezNcGridPoly created 
 
 
 
