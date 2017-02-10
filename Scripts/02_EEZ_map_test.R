@@ -61,7 +61,7 @@ eez[eez$PolygonID == 254,]
 eezNcPoly <- eez[which(eez$PolygonID == 254 | eez$PolygonID == 31),]
 
 # writeOGR(eezNcPoly, dsn = "./Miscellaneous", layer = "eezNcPoly", driver = "ESRI Shapefile")
-
+# eezNcPoly <- readOGR(dsn = "./Miscellaneous", layer = "eezNcPoly")
 # plot(earthGrid)
 # plot(eezNcPoly, add = TRUE)
 
@@ -236,30 +236,106 @@ InterCanyons
 
 Canyons = gUnionCascaded(InterCanyons)
 
-InterCanyons <- gIntersection(eezNcPolyGrid, Canyons, byid = TRUE)
+InterCanyons <- gIntersection(Canyons,eezNcPolyGrid, byid = TRUE)
 
 InterCanyons
 
 
-length(extract(eezNcGrid, InterCanyons, small = TRUE, weights = TRUE))
+Cells <- extract(eezNcGrid, InterCanyons, cellnumbers = TRUE)
 
-gArea(InterCanyons)
+InterCanyons@polygons[[1]]@Polygons[[1]]@coords
 
-Canyons
-plot(Canyons)
-
-
-vals <- extract(eezNcGrid, Canyons)
+# test <- SpatialPolygons(InterCanyons@polygons[[1]]@Polygons)
 
 
 
 
 
+polytest1coords <- InterCanyons@polygons[[1]]@Polygons[[1]]@coords
+
+polyTest1 <- SpatialPointsDataFrame(
+  coords = coordinates(polytest1coords),
+  data = data.frame(polytest1coords),
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+
+writeOGR(polyTest1, dsn = "./Miscellaneous", layer = "polyTest1", driver = "ESRI Shapefile")
+writeOGR(eezNcPolyGrid, dsn = "./Miscellaneous", layer = "eezNcPolyGrid", driver = "ESRI Shapefile")
 
 
 
+length(extract(eezNcGrid, InterCanyons, small = TRUE))
 
 
+Cells[[996]]
+InterCanyons@polygons[[996]]@Polygons[[1]]@coords
+
+eezNcGridTest <- eezNcGrid
+
+eezNcGridTest[20249] <- 2
+eezNcGridTest[20250] <- 3
+eezNcGridTest[20466] <- 4
+eezNcGridTest[20465] <- 5
+
+plot(eezNcGridTest)
+plot(InterCanyons, add = TRUE)
+polytest996coords <- InterCanyons@polygons[[996]]@Polygons[[1]]@coords
+
+polyTest996 <- SpatialPointsDataFrame(
+  coords = coordinates(polytest996coords),
+  data = data.frame(polytest996coords),
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+
+writeOGR(polyTest996, dsn = "./Miscellaneous", layer = "polyTest996", driver = "ESRI Shapefile")
+
+
+Cells[[351]]
+
+
+polytest351coords <- InterCanyons@polygons[[351]]@Polygons[[1]]@coords
+
+
+polyTest351 <- SpatialPointsDataFrame(
+  coords = coordinates(polytest351coords),
+  data = data.frame(polytest351coords),
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+writeOGR(polyTest351, dsn = "./Miscellaneous", layer = "polyTest351", driver = "ESRI Shapefile")
+
+eezNcGridTest[13229] <- 2
+eezNcGridTest[13228] <- 3
+eezNcGridTest[13227] <- 4
+
+plot(eezNcGridTest)
+plot(InterCanyons, add = TRUE)
+
+centro <- gCentroid(InterCanyons)
+plot(centro, col = "red", add = TRUE, cex = 5)
+
+
+InterCanyons@polygons[[351]]@Polygons[[1]]@labpt
+
+# gArea(InterCanyons)
+# 
+# Canyons
+# plot(Canyons)
+# 
+# 
+# vals <- extract(eezNcGrid, Canyons)
+
+
+# Extraire le labpt (centroid) de chaque features de l'objet InterCanyons et faire un extract dessus pour renvoyer la cellule
+
+
+coordinates(InterCanyons[1:5])
+
+InterCanyons@polygons[[5]]@Polygons[[1]]@labpt
+
+dim(getSpPPolygonsLabptSlots(InterCanyons))
+
+Cells <- extract(eezNcGrid, coordinates(InterCanyons), cellnumber = TRUE)
+dim(Cells)
 
 
 

@@ -32,7 +32,7 @@ library(rgeos)
 
 # Reading/creating the earth GRID a transformer en fonction
 
-earthGrid<-nc_open("./environment/temp/earthgrid/global-analysis-forecast-phy-001-024.nc") # Open any nc file from the bioclimatic data used
+earthGrid<-nc_open("./Environment/temp/earthgrid/global-analysis-forecast-phy-001-024.nc") # Open any nc file from the bioclimatic data used
 
 
 earthGrid<-ncvar_get(earthGrid,"thetao")
@@ -130,9 +130,9 @@ getCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
   print("Merging OBIS and NC datasets")
   OccsRaw <- merge(OBIS_occs, NC_occs, all = TRUE)
-
+  
   Occs <- OccsRaw[, names(NC_occs)]
-
+  
   
   
   
@@ -253,7 +253,7 @@ generateAbs <- function(Occs){
   ## Generate auto paths to species shapefile
   my_sp <- Occs$species[1]
   
-  pathSp = paste("./biodiversity/iucn/", my_sp, sep = "", collapse = "")
+  pathSp = paste("./Biodiversity/iucn/", my_sp, sep = "", collapse = "")
   
   layerSp = sub(".shp", "", list.files(path = pathSp, full.names = FALSE, pattern = ".shp")[1])
   
@@ -300,14 +300,14 @@ generateAbs <- function(Occs){
   
   sampleClasses <- function(r, n)  {
     
-      cellVal <- which(t(as.matrix(r)) == 2) # get All cells for class 2 (=Abs)
-      
-      samples <- sample(cellVal, n) # sample class's cell number
-      
-      return(samples)
-    }
+    cellVal <- which(t(as.matrix(r)) == 2) # get All cells for class 2 (=Abs)
     
+    samples <- sample(cellVal, n) # sample class's cell number
     
+    return(samples)
+  }
+  
+  
   pseudoAbsCells <- sampleClasses(antiAbs, length(OccsCells))
   
   pseudoAbs <- as.data.frame(xyFromCell(antiAbs, pseudoAbsCells))
@@ -319,7 +319,7 @@ generateAbs <- function(Occs){
   pseudoAbs$species <- Occs$species[1]
   
   pseudoAbs
-
+  
   
 } # eo generateAbs
 
@@ -340,26 +340,22 @@ getOccsAbs <- function(my_sp){
 }
 
 
-# Cambly <- getOccsAbs("Carcharhinus_amblyrhynchos")
+
+
+species <- c("Carcharhinus_amblyrhynchos","Carcharhinus_melanopterus","Triaenodon_obesus")
+
+
+cleandOccs <- lapply(species,getOccsAbs)
+
+names(cleandOccs) <- species
+
+
+# cleandOccs[["Carcharhinus_amblyrhynchos"]] # <=> cleandOccs$Carcharhinus_amblyrhynchos
 # 
-# CamblyAbs <- Cambly[[2]]
+# cleandOccsMerged <- do.call(rbind,cleandOccs) # -> rbind tous les tableaux de la liste
 
 
 
-# 
-# getCellsExtent <- function(occs, abs){
-# 
-# 
-#   extOfCells <- lapply(lapply( X = OccsCells, rasterFromCells, x = OccsRast), extent)
-# 
-#   # extOfCells[[1]]
-# 
-#   extOfCells
-# 
-# }
-# 
-# 
-# Camblycells_ext <- getCellsExtent(Occs)
 
 
 
@@ -371,15 +367,15 @@ getOccsAbs <- function(my_sp){
 #1. obtenir une liste de cellules uniques
 
 getCellList <- function(cleandoccs){
-
+  
   cellAll <-    unlist(lapply(cleandOccs,function(x){c(x$occs$cellNumber, x$abs$cellNumber)}))
   cellList <- unique(cellAll)
-
+  
   return(cellList)
-
+  
 }
 
-
+cellList <- getCellList(cleandOccs)
 
 # #2. create a function returning cell extent from cell number
 # getCellExtent <- function(cellList, raster = earthGrid){
@@ -405,6 +401,95 @@ getCellExtent <- function(cellID, raster = earthGrid){
 
 
 #3. function that download temp data for a cell
+
+
+getCellTempData <- function(cellID){
+  
+  #out dir
+  patName <- paste0("./Environment/temp/rawData/",cellID)
+  dir.create(patName)
+  outDir <- paste0("./Environment/temp/rawData/",cellID,"/")
+  
+  #cell Extent
+  cellExt <- getCellExtent(cellID)
+  
+  # cellID <- cellExt[[1]]
+  
+  
+  
+  #call python stuff
+  
+  ## sourcing the function
+  source("./Scripts/CMEMS3567_GLO_Daily_by_Month_R/getCMEMS.R")
+  
+  ## parameters
+  
+  myPythonPath <- "python"
+  
+  ## motu-client.py path
+  ### this may change according to your computer configuration
+  motu_cl_lib <- "./Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/motu-client-python-master/src/python/motu-client.py"
+  
+  
+  ### call the function
+  getCMEMS(scriptPath="./Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/CMEMS3567_GLO_Daily_by_Month_CallFromR.py",
+           python=myPythonPath,
+           motu_cl = motu_cl_lib,
+           log_cmems="fbaletaud",
+           pwd_cmems="FlorianCMEMS2017",
+           #Date
+           yyyystart="2006",
+           mmstart="12",
+           yyyyend="2016",
+           mmend="12",
+           hh=" 12:00:00",
+           dd="31",
+           # Area 
+           xmin=as.character(cellExt@xmin),
+           xmax=as.character(cellExt@xmax),
+           ymin=as.character(cellExt@ymin),
+           ymax=as.character(cellExt@ymax),
+           zmin="0.49", 
+           zmax="0.50", 
+           # Variables 
+           table_var_cmd = "thetao",
+           table_data_type = "TEMP_",
+           # Output files 
+           out_path =  outDir, #Make sure to end your path with "/" 
+           pre_name= "CMEMS_GLO_001_024_")
+  
+  
+}#eo getCellTempData
+
+
+
+#test
+getCellTempData(cellList[1])
+
+
+lapply(cellList,getCellTempData)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 getCellTempData <- function(cellID){
   
@@ -435,7 +520,7 @@ getCellTempData <- function(cellID){
   
   ### call the function
   getCMEMS(scriptPath="D:/Florian/Documents/Universite/M1SBM/Stage/Travail_FBaletaud/Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/CMEMS3567_GLO_Daily_by_Month_CallFromR.py",
-          python=myPythonPath,
+           python=myPythonPath,
            motu_cl = motu_cl_lib,
            log_cmems="fbaletaud",
            pwd_cmems="FlorianCMEMS2017",
@@ -466,12 +551,6 @@ getCellTempData <- function(cellID){
   
 }#eo getCellTempData
 
-#test
-getCellTempData(cellList[1])
-
-
-lapply(cellList,getCellTempData)
-
 
 
 
@@ -480,17 +559,27 @@ lapply(cellList,getCellTempData)
 
 #####################################
 
-species <- c("Carcharhinus_amblyrhynchos","Carcharhinus_melanopterus","Triaenodon_obesus")
+
+# Cambly <- getOccsAbs("Carcharhinus_amblyrhynchos")
+# 
+# CamblyAbs <- Cambly[[2]]
 
 
-cleandOccs <- lapply(species,getOccsAbs)
 
-names(cleandOccs) <- species
-
-
-cleandOccs[["Carcharhinus_amblyrhynchos"]] # <=> cleandOccs$Carcharhinus_amblyrhynchos
-
-cleandOccsMerged <- do.call(rbind,cleandOccs) # -> rbind tous les tableaux de la liste
+# 
+# getCellsExtent <- function(occs, abs){
+# 
+# 
+#   extOfCells <- lapply(lapply( X = OccsCells, rasterFromCells, x = OccsRast), extent)
+# 
+#   # extOfCells[[1]]
+# 
+#   extOfCells
+# 
+# }
+# 
+# 
+# Camblycells_ext <- getCellsExtent(Occs)
 
 
 

@@ -73,7 +73,7 @@ for(shp in shps) {
   assign(shp, readOGR("./Environment/global-seafloor-geomorphic-features-map",layer = shp))
 }
 
-CoralShp = readOGR("./Environment/DataPack-14_001_WCMC008_CoralReef2010_v1_3/01_Data", layer = "14_001_WCMC008_CoralReef2010_v1_3")
+CoralShp = readOGR("./Environment/WCMC008_CoralReef2010_v1_3/01_Data", layer = "14_001_WCMC008_CoralReef2010_v1_3")
 
 # shpv = as.vector(shps)
 # 
