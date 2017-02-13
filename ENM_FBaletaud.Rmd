@@ -43,6 +43,8 @@ read_chunk("./scripts/01_Occurence_data.R")
 ```{r temperature, eval=FALSE, include=FALSE}
 
 ```
+nc files are formatted with the help of this website
+http://geog.uoregon.edu/bartlein/courses/geog607/Rmd/netCDF_01.htm
 
 ## Sea floor geomorphology
 
