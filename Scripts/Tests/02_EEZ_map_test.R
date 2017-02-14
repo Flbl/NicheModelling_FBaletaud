@@ -164,6 +164,73 @@ croppedNcPoly <- lapply(croppedNcshp, cropNcPoly)
 
 croppedNcPoly <- croppedNcPoly[lapply(croppedNcPoly, length)!=0]
 
+# Filtering the features through the occurrences and where they intersect (deleting features with no occurrences on them)
+NCRecords <- read.table("./Biodiversity/dataset_fitted.csv", sep = ";", dec = ",", header = TRUE)
+
+# keeping coords and species of interest
+NCRecords <- NCRecords[,c(2:3, 7, 9, 11)]
+NCRecords <- NCRecords[NCRecords$C_amblyrhynchos != 0 | NCRecords$C_melanopterus != 0 | NCRecords$T_obesus !=0,]
+rownames(NCRecords) <- NULL
+
+## creating spatial points for our occurrences
+
+RecPoints <- SpatialPointsDataFrame(
+  coords = cbind(NCRecords$longitude, NCRecords$latitude),
+  data = NCRecords,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+)
+
+## Retrieving cells with occurrences in it
+
+RecPoly <- raster(extent(eezNcGrid))
+res(RecPoly) <- res(eezNcGrid)
+projection(RecPoly) <- proj4string(eezNcGrid)
+origin(RecPoly) <- origin(eezNcGrid)
+
+RecPoly <- rasterize(RecPoints,field = "occurrence", RecPoly)
+
+RecPoly <- as(RecPoly, "SpatialPolygons")
+
+
+
+
+# gIntersection(eezNcPolyGrid, RecPoints, byid = TRUE)
+
+
+which(gIntersects(Canyons,RecPoints, byid = TRUE) == TRUE)
+
+
+crossingFeatures <- lapply(croppedNcPoly, function(x, Rec = RecSpatial){ 
+  
+  true = which(gIntersects(x,RecSpatial, byid = TRUE) == TRUE)
+  
+  true
+  
+  })
+
+
+crpdNcPolyFiltrd <- croppedNcPoly[lapply(crossingFeatures, length)!=0]
+
+
+
+interCrss <- lapply(gIntersection(crpdNcPolyFiltrd,eezNcPolyGrid, byid = TRUE))
+
+
+# 167.93750001999999 -21.354166670000001 at 167.93750001999999 -21.354166670000001 
+errdat <- data.frame(lat = c(167.93750001999999,167.93750001999999 ), long =c(-21.354166670000001, -21.354166670000001))
+
+errCoords <- coordinates(errdat)
+errSpat <- SpatialPoints(coords = errCoords,
+                         proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+
+err <- 
+InterCanyons
+
+
+Cells <- extract(eezNcGrid, InterCanyons, cellnumbers = TRUE)
+
+
 
 
 

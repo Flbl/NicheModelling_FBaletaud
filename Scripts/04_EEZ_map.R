@@ -124,22 +124,68 @@ croppedNcshp$Coral <- CoralNc
 
 # Merging the features of the polygons to one polygon
 
-cropNcPoly <- function(shp, polyGrid = eezNcPolyGrid){
+croppedNcPoly <- lapply(croppedNcshp, gUnionCascaded)
+
+croppedNcPoly <- croppedNcPoly[lapply(croppedNcPoly, length)!=0] # Removing potential null polygons
+
+
+# Filtering the features through the occurrences and where they intersect (deleting features with no occurrences on them)
+
+NCRecords <- read.table("./Biodiversity/dataset_fitted.csv", sep = ";", dec = ",", header = TRUE)
+
+# keeping coords and species of interest
+NCRecords <- NCRecords[,c(2:3, 7, 9, 11)]
+NCRecords <- NCRecords[NCRecords$C_amblyrhynchos != 0 | NCRecords$C_melanopterus != 0 | NCRecords$T_obesus !=0,]
+NCRecords$occurrence <- 1
+rownames(NCRecords) <- NULL
+
+
+## creating spatial points for our occurrences
+
+RecSpatial = SpatialPointsDataFrame(
+  coords = cbind(NCRecords$longitude, NCRecords$latitude),
+  data = NCRecords,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+)
+
+## Retrieving cells with occurrences in it
+
+RecPoly <- raster(extent(eezNcGrid))
+res(RecPoly) <- res(eezNcGrid)
+projection(RecPoly) <- proj4string(eezNcGrid)
+origin(RecPoly) <- origin(eezNcGrid)
+RecPoly <- rasterize(RecPoints,field = "occurrence", RecPoly)
+
+RecPoly <- as(RecPoly, "SpatialPolygons") # Points are now one with cell under a polygon form
+
+
+
+
+
+# retrieving features that intersect with the occurrence cell
+
+crossingFeatures <- lapply(croppedNcPoly, function(x, Rec = RecPoly){ 
   
-  shp <- gUnionCascaded(shp)
+  true = which(gIntersects(x,RecPoly, byid = TRUE) == TRUE)
   
-  shp <- gIntersection(eezNcPolyGrid, shp, byid = TRUE)
+  true
   
-  shp
+})
+
+
+# Intersecting the feature's polygons with the occurrences
+
+
+crpdNcPolyFiltrd <- croppedNcPoly[lapply(crossingFeatures, length)!=0]
+
+interCrss <- lapply(crpdNcPolyFiltrd,function(x, e = eezNcPolyGrid){
   
-}
+  inter = gIntersection(x, eezNcPolyGrid, byid = TRUE)
+  
+  inter
+})
 
-croppedNcPoly <- lapply(croppedNcshp, cropNcPoly)
-
-croppedNcPoly <- croppedNcPoly[lapply(croppedNcPoly, length)!=0]
-
-
-
+#erreur :  tenter de refiltrer les occurrences des fois que y'en ai en NA
 
 
 # extract percentages of each polygons in each cells
