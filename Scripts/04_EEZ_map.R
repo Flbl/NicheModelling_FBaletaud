@@ -124,7 +124,7 @@ croppedNcshp$Coral <- CoralNc
 
 # Merging the features of the polygons to one polygon
 
-croppedNcPoly <- lapply(croppedNcshp, gUnionCascaded)
+croppedNcPoly <- croppedNcshp #lapply(croppedNcshp, gUnionCascaded)
 
 croppedNcPoly <- croppedNcPoly[lapply(croppedNcPoly, length)!=0] # Removing potential null polygons
 
@@ -142,11 +142,20 @@ rownames(NCRecords) <- NULL
 
 ## creating spatial points for our occurrences
 
-RecSpatial = SpatialPointsDataFrame(
+RecPoints = SpatialPointsDataFrame(
   coords = cbind(NCRecords$longitude, NCRecords$latitude),
   data = NCRecords,
   proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
 )
+
+NCRecords <- NCRecords[which(raster::extract(eezNcGrid,RecSpatial) == 1),]
+
+RecPoints = SpatialPointsDataFrame(
+  coords = cbind(NCRecords$longitude, NCRecords$latitude),
+  data = NCRecords,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+)
+
 
 ## Retrieving cells with occurrences in it
 
@@ -157,8 +166,6 @@ origin(RecPoly) <- origin(eezNcGrid)
 RecPoly <- rasterize(RecPoints,field = "occurrence", RecPoly)
 
 RecPoly <- as(RecPoly, "SpatialPolygons") # Points are now one with cell under a polygon form
-
-
 
 
 
@@ -184,6 +191,8 @@ interCrss <- lapply(crpdNcPolyFiltrd,function(x, e = eezNcPolyGrid){
   
   inter
 })
+
+
 
 #erreur :  tenter de refiltrer les occurrences des fois que y'en ai en NA
 

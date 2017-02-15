@@ -224,7 +224,7 @@ errSpat <- SpatialPoints(coords = errCoords,
                          proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
 
 
-err <- 
+
 InterCanyons
 
 
@@ -313,6 +313,18 @@ Cells <- extract(eezNcGrid, InterCanyons, cellnumbers = TRUE)
 InterCanyons@polygons[[1]]@Polygons[[1]]@coords
 
 # test <- SpatialPolygons(InterCanyons@polygons[[1]]@Polygons)
+
+
+
+# test 2
+
+
+poly = crpdNcPolyFiltrd[[3]]
+
+poly <- gIntersection(poly,eezNcPolyGrid, byid = TRUE)
+
+plot(eezNcGrid)
+plot(poly, add = TRUE, col = "red")
 
 
 
