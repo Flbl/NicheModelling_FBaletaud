@@ -22,7 +22,7 @@ library(marmap)
 library(lubridate)
 
 
-# @knitr earthGRID
+# @knitr EARTHgrid
 
 # Reading/creating the earth GRID 
 
@@ -42,7 +42,7 @@ earthGrid <- reclassify(earthGrid, cbind(NA,2)) # 2 = ocean
 
 
 
-
+# @knitr EEZgrid
 
 
 # read the eez shapefile and crop the NC eez
@@ -74,11 +74,9 @@ eezNcPolyGrid$cellID <- c(1:length(eezNcPolyGrid))
 
 
 
-
+# @knitr SubstrateCrop
 
 # Crop the geomorphic substrate and coral
-
-## @knitr seafloor
 
 
 shps <- dir("./Environment/geomorph", "*.shp")
@@ -117,7 +115,7 @@ CoralNc <- crop(CoralShp, extent(eezNcPoly))
 croppedNcshp$Coral <- CoralNc
 
 
-# Merging the features of the polygons to one polygon
+# Merging the features of the polygons to one polygon # Changed due to issues in the resulting polygons
 
 croppedNcPoly <- croppedNcshp #lapply(croppedNcshp, gUnionCascaded)
 
@@ -190,6 +188,7 @@ interCrss <- lapply(crpdNcPolyFiltrd,function(x, e = eezNcPolyGrid){
 })
 
 
+# @knitr ExtractCov 
 
 # Creating the final data.frame with cells numbers and values associated
 

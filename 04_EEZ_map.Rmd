@@ -1,0 +1,85 @@
+---
+title: "04_EEZ_map"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rmarkdown)
+library(knitr)
+library(devtools)
+library(dplyr)
+library(sp)
+library(tools)
+library(ncdf4)
+library(raster)
+library(rgeos)
+library(plyr)
+```
+
+# Main lines
+
+This Rmd is aimed at describing how the script 04_EEZ_map.R works while running it. It is the first script coming after the 1st model on bioclimatic variables. This time on a regional/local scale (= New caledonian EEZ), the geomorphic variables are prepared. The goal is to get a data frame with the cover values (in km²) of each geomorphic features (see blue habitats layers.Rmd) in each cells (we keep the grid from the first model, cropped to the eez).
+
+# The script
+
+We start off by reading the script. This Rmd file should be in the main directory of the working directory.
+```{r}
+read_chunk("./Scripts/04_EEZ_map.R")
+```
+
+## earthGrid
+
+The first step is to get the NC's eez from the grid of the first model. We first recreate the earth grid from a random nc file covering the world extents.
+
+```{r EARTHgrid}
+
+plot(earthGrid)
+```
+
+## Study region : New Caledonian Economical Exclusive Zone (EEZ)
+
+Since we just want the raster layer, the values in each cells are not extremly relevant as long as the difference between earth and water is made. The next process will get the New Caledonian EEZ.
+
+The shapefile of the countries EEZ has been downloaded from [marineregions.org](http://marineregions.org/), [here](http://marineregions.org/downloads.php) under the "Exclusive Economic Zones Boundaries (EEZ)" tab. After reading the huge shapefile, the 2 polygons concerning New Caledonia are extracted and used to crop the earthGrid raster to the study region. A what is called "eezNcGridPoly" is produced in the mean time for later use. It is basicaly the raster cells converted into polygons.
+
+
+```{r EEZgrid}
+
+plot(eezNcGrid)
+plot(eezNcPoly, add = TRUE)
+```
+
+## Preparing the substrate's geomorphic features
+
+The different shapefiles of the geomorphic substrate layers downloaded from [Blue Habitats](http://www.bluehabitats.org/) (see Blue_Habitats_Layers.Rmd for further details). They are cropped to the extent of the study region and filtered in case one of the features doesn't intersect at all with the new extents (e.g : Glacial throughs).
+
+here's an example of the cropped coral layer
+
+```{r SubstrateCrop}
+
+plot(eezNcGrid)
+plot(interCrss$Guyots, add = TRUE, col = "grey")
+```
+
+What this chunk also does is filtering the geomorphic features by keeping only the ones that are present in a cell with an occurrence from our biodiversity dataset. Those features are the following :
+```{r, echo=FALSE}
+
+names(interCrss)
+```
+
+It is noticed that Seamounts are absents. But the guyots and rigdes are still present and not necessarily a bad trade considering the details of the features. One of the noticed potential bias with the dataset is that it was aimed at being sampled on coral. One way to decrease this is to separate the cover areas of each features, thus we accumulate the different surfaces to be sure not to minimise any of the variables.*
+
+## Extracting the surface of each features in each cells
+
+In order to proceed, the projection had to be changed into a Behrman instead of WGS84. Therefore it is only an estimation of the surface for each cells considering they were still shaped as angular projection and not geographic. 
+
+```{r ExtractCov}
+head(substrate)
+```
+
+The result is a dataframe containing the cells that are within the zee from the eezNcGrid raster (others would be NAs). The row names represent the cell numbers in the eezNcGrid rasterlayer.
+
+
+
+
