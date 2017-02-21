@@ -42,10 +42,17 @@ eezNcGrid <- reclassify(eezNcGrid, cbind(2,1)) # 1 = Ocean
 
 ncGridBehr <- projectRaster(eezNcGrid, 
                             crs = CRS("+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +ellps=WGS84 +units=m +no_defs")
-                            , method = "ngb")
+                            , 
+                            method = "ngb",
+                            res = 4000)
 
 plot(ncGridBehr)
 
 plot(eezNcGrid)
 
+writeRaster(ncGridBehr, "eezNcGridBehrman.asc", overwrite = TRUE) # doesn't save coord. ref geotiff does
 
+
+test <- raster("eezNcGridBehrman.asc")
+test
+plot(test)
