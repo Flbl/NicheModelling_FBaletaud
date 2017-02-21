@@ -16,6 +16,7 @@ library(tools)
 library(ncdf4)
 library(raster)
 library(rgeos)
+library(plyr)
 
 library(ggmap)
 library(dplyr)
@@ -77,6 +78,8 @@ eezNcGrid <- reclassify(eezNcGrid, cbind(1,NA)) # NA = earth/outlimits
 eezNcGrid <- reclassify(eezNcGrid, cbind(2,1)) # 1 = Ocean
 # writeRaster(eezNcGrid, "./Miscellaneous/eezNcGrid.asc", overwrite = TRUE)
 # eezNcPoly <- readOGR(dsn = "./Miscellaneous", layer = "eezNcPoly")
+# eezNcGridBehr <- eezNcGrid
+# proj4string(eezNcGridBehr) <- "+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +ellps=WGS84 +units=m +no_defs"
 
 
 # eezNcSpGrid <- as(eezNcGrid, "SpatialGridDataFrame")
@@ -232,10 +235,180 @@ Cells <- extract(eezNcGrid, InterCanyons, cellnumbers = TRUE)
 
 
 
+# Extraire le labpt (centroid) de chaque features de l'objet InterCanyons et faire un extract dessus pour renvoyer la cellule
+
+
+coordinates(InterCanyons[1:5])
+
+InterCanyons@polygons[[5]]@Polygons[[1]]@labpt
+
+dim(getSpPPolygonsLabptSlots(InterCanyons))
+
+Cells <- extract(eezNcGrid, coordinates(InterCanyons), cellnumber = TRUE)
+dim(Cells)
+
+
+
 
 
 
 # extract percentages of each polygons in each cells
+
+
+
+
+
+######################### Bordel ######################################
+test <- area(eezNcGrid, na.rm = TRUE)
+
+
+# Change the projection of everything to calculate areas
+
+test <- interCrss[[1]]
+
+test <- spTransform(test, CRS("+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +ellps=WGS84 +units=m +no_defs"))
+
+# test <- spTransform(eezNcPoly, CRS("+init=epsg:2984"))
+
+gArea(test, byid = TRUE)/(1000*1000)
+
+plot(NcGridCea)
+
+
+# Creating the final data.frame with cells numbers and values associated
+
+gridCells <- as.data.frame(eezNcGrid)
+
+abyssC <- extract(eezNcGrid, coordinates(interCrss[[1]]), cellnumber = TRUE)
+abyssC <- as.data.frame(abyssC)
+
+
+# extract percentages of each polygons in each cells
+
+test <- spTransform(test, CRS("+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +ellps=WGS84 +units=m +no_defs"))
+
+# test <- spTransform(eezNcPoly, CRS("+init=epsg:2984"))
+
+berhSubst <- lapply(interCrss, spTransform, CRS("+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +ellps=WGS84 +units=m +no_defs")) 
+
+abyssA <- gArea(berhSubst[[1]], byid = TRUE)/(1000*1000)
+
+names(abyssA) <- abyssC[,"cells"]
+
+
+abyssC <- extract(eezNcGrid, coordinates(interCrss[[1]]), cellnumber = TRUE)
+abyssC <- as.data.frame(abyssC)
+
+behrSubst <- lapply(interCrss, spTransform, CRS("+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +ellps=WGS84 +units=m +no_defs")) 
+
+abyss[!is.na(featCov[[1]][,1])] <- featCov[[1]][,3]
+
+abyss <- replace(abyss, abyss[which(names(abyss) == featCov[[1]][,1])] ,  featCov[[1]][,3])
+
+
+featCovRep <- featCov[[1]][,1]
+length(featCovRep) <- length(abyss)
+featCovRep[is.na(featCovRep)] <- 0
+
+abyss[abyss == featCov[[1]][,1]] <- featCov[[1]][,3]
+
+
+abyss <- replace(abyss, abyss[which(names(abyss) == featCov[[1]][,1])] ,  featCov[[1]][,3])
+
+
+
+names(abyss) <- 1:dim(substrateNoNa)[1]
+
+abyss <- replace(abyss, match(featCov[[1]][,1], names(abyss)),  featCov[[1]][,3])
+
+mtch <- match(featCov[[1]][,1], names(abyss))
+
+abyss[featCov[[1]][,1] %in% names(abyss)] <- featCov[[1]][,3]
+
+
+featCov[[1]][,1] %in% names(abyss)
+
+match(featCov[[1]][,1], names(abyss))
+
+# abyss <- featCov[[1]][,3]
+
+abyss <- data.frame(area = rep (0, dim(substrateNoNa)[1]))
+
+abyss$area[which(rownames(abyss) == match(featCov[[1]][,1], rownames(abyss)))] <- featCov[[1]][,3]
+
+mtch <- as.vector(match(featCov[[1]][,1], rownames(abyss)))
+
+abyss[which(abyss$cells == mtch)] <- featCov[[1]][,3]
+
+abyss$cells <- rownames(abyss)
+
+abyss = merge(abyss, featCov[[1]][,c(1,3)], by = )# match(featCov[[1]][,1], rownames(abyss)))
+
+abyss = cbind(substrateNoNa, abyss)
+
+
+
+
+abyss = cbind.fill(abyss, featCov[[1]][,c(1,3)])
+length(abyss) <- nrow(substrateNoNa)
+abyss <- merge(abyss, featCov[[1]][,c(1,3)], by = intersect(rownames(abyss),featCov[[1]][,1] ) )
+
+# names(abyss) = c(1:length(abyss))
+
+# abyss$rownames <- rownames(abyss)
+
+abyss[abyss$rownames==featCells[[1]][,"cells"],]
+
+abyss <- replace(abyss, names(abyss)==featCells[[1]][,"cells"], featCov[[1]][,3] )
+
+
+rownames(abyss) <- featCells[[1]][,"cells"]
+
+abyss[rownames(featCov[[1]])] <- featCov[[1]][,3]
+
+
+abyssCov <- cbind(abyssC, abyssA) 
+
+abyssCov1 <- rep (NA, dim(gridCells)[1])
+
+abyssCov1[!is.na(gridCells)] <- abyssCov[,3]
+
+abyssCov <- cbind(gridCells, abyssCov1)
+
+
+
+
+featCov1 <- lapply(featCov, function(x){
+  
+  y <- names(featCov)
+  
+  # res <- grep(,)
+
+
+x <- rep (NA, dim(gridCells)[1])
+
+x[!is.na(gridCells)] <- featCov[[y]][,"area"] == TRUE
+
+x
+
+})
+
+
+featCov1 <- for(i in length(featCov)){
+  
+  
+  featCov1[[i]][!is.na(gridCells)] <- featCov[[i]][,"area"]
+  
+}
+
+
+
+
+
+
+
+
+
 
 ncGridValues <- extract(eezNcGrid, croppedNcPoly[[4]], small = TRUE)
 
@@ -248,10 +421,78 @@ valCounts <- lapply(ncGridValues, table)
 valPct <- lapply(valCounts, FUN=function(x, eezNcGrid){ x / sum() } )
 
 
+#########################################################
+
+
+getSingleGridData <- function(x, gridd = gridCells){
+  
+  substrate <- gridd
+  
+  substrateNoNa <- data.frame(layer = gridd$layer[!is.na(gridd$layer)])
+  
+  rownames(substrateNoNa) <- na.omit(rownames(as.data.frame(substrate))[substrate[["layer"]] == 1])
+  
+  substrateNoNa$RN <- as.numeric(rownames(substrateNoNa))
+  
+  abyss1 <- data.frame(area = x[,3], RN = x[,1])
+  
+  abyss <- aggregate(abyss1, by = list(cells = abyss1$RN), sum)
+  
+  rownames(abyss) <- abyss$cells
+  
+  zeroNames <- substrateNoNa$RN[is.na(match(substrateNoNa$RN, abyss$cells))]
+  
+  zeroDat <- data.frame(area = numeric(dim(substrateNoNa)[1] - dim(abyss)[1]), row.names = zeroNames)
+  
+  abyss <- data.frame(area = abyss$area, row.names = rownames(abyss))
+  
+  abyss <- rbind(abyss, zeroDat)
+  
+  abyss <- data.frame(area = abyss[ order(as.numeric(row.names(abyss))), ])
+  
+  rownames(abyss) <- rownames(substrateNoNa)
+  
+  abyssNa <- rep (NA, dim(substrateNoNa)[1])
+  
+  abyssNa[!is.na(gridd)] <- abyss[,"area"]
+  
+  abyssNa
+  
+}#eo getSingleGridData
+
+# substData <- cbind(substrate, abyssNa)
+
+# substData
+x = featCov[[2]]
+test <- getSingleGridData(featCov[[2]])
+
+test <- lapply(featCov,getSingleGridData)
 
 
 
 
+
+
+
+testSubs <- cbind(coordinates(eezNcGrid), substrate)
+testSubs <- na.omit(testSubs)
+
+testSpt <-  SpatialPointsDataFrame(
+  coords = cbind(testSubs$x, testSubs$y),
+  data = testSubs,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+
+testRast <- raster(extent(eezNcGrid))
+res(testRast) <- res(eezNcGrid)
+projection(testRast) <- proj4string(eezNcGrid)
+origin(testRast) <- origin(eezNcGrid)
+
+testRast <- rasterize(testSpt,field = "Ridges", testRast)
+plot(testRast)
+
+testRast <- raster(test)
+test <- as.matrix(substrate$Abyss)
 
 
 
@@ -404,18 +645,6 @@ InterCanyons@polygons[[351]]@Polygons[[1]]@labpt
 # vals <- extract(eezNcGrid, Canyons)
 
 
-# Extraire le labpt (centroid) de chaque features de l'objet InterCanyons et faire un extract dessus pour renvoyer la cellule
-
-
-coordinates(InterCanyons[1:5])
-
-InterCanyons@polygons[[5]]@Polygons[[1]]@labpt
-
-dim(getSpPPolygonsLabptSlots(InterCanyons))
-
-Cells <- extract(eezNcGrid, coordinates(InterCanyons), cellnumber = TRUE)
-dim(Cells)
-
 
 
 r <- raster(ncol=36, nrow=18)
@@ -439,7 +668,7 @@ class.df <- as.data.frame(t(sapply(v.pct,'[',1:length(unique(r)))))
 
 # Intersecting the variables polygons to the eezNcPolyGrid
 
-gArea(eezNcPolyGrid, croppedNcshp[[4]], byid = TRUE)
+gArea(test, croppedNcshp[[4]], byid = TRUE)
 
 gIntersection(eezNcPolyGrid, croppedNcshp[[4]], byid = TRUE)
 

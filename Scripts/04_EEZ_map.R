@@ -2,13 +2,8 @@
 ## Creating the local region map/raster off the NC EEZ ##
 #########################################################
 
-library(rgbif)
-library(taxize)
-library(taxizesoap)
+
 library(devtools)
-library(robis)
-library(leaflet)
-library(tibble)
 library(rgdal)
 library(dplyr)
 library(sp)
@@ -16,6 +11,7 @@ library(tools)
 library(ncdf4)
 library(raster)
 library(rgeos)
+library(plyr)
 
 library(ggmap)
 library(dplyr)
@@ -24,10 +20,9 @@ library(readr)
 library(pryr)
 library(marmap)
 library(lubridate)
-library(broom)
-library(mregions)
 
 
+# @knitr earthGRID
 
 # Reading/creating the earth GRID 
 
@@ -89,7 +84,7 @@ eezNcPolyGrid$cellID <- c(1:length(eezNcPolyGrid))
 shps <- dir("./Environment/geomorph", "*.shp")
 shps <- file_path_sans_ext(shps)
 
-shps <- shps[-c(2,17)] # Removing the classification layers and keeping the simple versions of Abyss and Shelf
+shps <- shps[-which(shps == "Abyssal_Classification" | shps == "Shelf_Classification")] # Removing the classification layers and keeping the simple versions of Abyss and Shelf
 
 # Function to crop 
 
@@ -148,7 +143,7 @@ RecPoints = SpatialPointsDataFrame(
   proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
 )
 
-NCRecords <- NCRecords[which(raster::extract(eezNcGrid,RecSpatial) == 1),]
+NCRecords <- NCRecords[which(raster::extract(eezNcGrid,RecPoints) == 1),]
 
 RecPoints = SpatialPointsDataFrame(
   coords = cbind(NCRecords$longitude, NCRecords$latitude),
@@ -180,10 +175,12 @@ crossingFeatures <- lapply(croppedNcPoly, function(x, Rec = RecPoly){
 })
 
 
+
 # Intersecting the feature's polygons with the occurrences
 
 
 crpdNcPolyFiltrd <- croppedNcPoly[lapply(crossingFeatures, length)!=0]
+
 
 interCrss <- lapply(crpdNcPolyFiltrd,function(x, e = eezNcPolyGrid){
   
@@ -194,13 +191,105 @@ interCrss <- lapply(crpdNcPolyFiltrd,function(x, e = eezNcPolyGrid){
 
 
 
-#erreur :  tenter de refiltrer les occurrences des fois que y'en ai en NA
+# Creating the final data.frame with cells numbers and values associated
+
+gridCells <- as.data.frame(eezNcGrid)
+
+
 
 
 # extract percentages of each polygons in each cells
 
-#Created polygons have an area saved
-#Need to find a way to associate the area of each polygon corresponding to a cell with the good cell ID from eezNcGridPoly created 
+getCellsDf <- function(interCrss) {
+
+
+  featCellsCoords <- lapply(interCrss, coordinates)
+
+  featCells <- lapply(featCellsCoords, extract, x = eezNcGrid,cellnumber = TRUE)
+
+  featCells <- lapply(featCells, as.data.frame)
+
+  featCells
+
+}# eo getCellsDf
+
+
+featCells <- getCellsDf(interCrss)
+
+
+behrSubst <- lapply(interCrss, spTransform, CRS("+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +ellps=WGS84 +units=m +no_defs")) 
+
+
+
+getSurfPoly <- function(behrSubst){
+  
+  featCov <- lapply(behrSubst, gArea, byid = TRUE)
+  
+  featCov <- lapply(featCov, function(x){
+    
+    x <- x / (1000*1000)
+  
+    x
+})
+ 
+  featCov 
+  
+}# eo getSurfPoly
+
+featCov <- getSurfPoly(behrSubst)
+
+featCov <- mapply(cbind, featCells, area = featCov, SIMPLIFY = FALSE)
+
+
+
+
+getSingleGridData <- function(x, gridd = gridCells){
+  
+  substrate <- gridd
+  
+  substrateNoNa <- data.frame(layer = gridd$layer[!is.na(gridd$layer)])
+  
+  rownames(substrateNoNa) <- na.omit(rownames(as.data.frame(substrate))[substrate[["layer"]] == 1])
+  
+  substrateNoNa$RN <- as.numeric(rownames(substrateNoNa))
+  
+  abyss1 <- data.frame(area = x[,3], RN = x[,1])
+  
+  abyss <- aggregate(abyss1, by = list(cells = abyss1$RN), sum) # some polygons are in the same cell so we add their surfaces
+  
+  rownames(abyss) <- abyss$cells
+  
+  zeroNames <- substrateNoNa$RN[is.na(match(substrateNoNa$RN, abyss$cells))]
+  
+  zeroDat <- data.frame(area = numeric(dim(substrateNoNa)[1] - dim(abyss)[1]), row.names = zeroNames)
+  
+  abyss <- data.frame(area = abyss$area, row.names = rownames(abyss))
+  
+  abyss <- rbind(abyss, zeroDat)
+  
+  abyss <- data.frame(area = abyss[ order(as.numeric(row.names(abyss))), ])
+  
+  rownames(abyss) <- rownames(substrateNoNa)
+  
+  abyss
+  
+  # abyssNa <- rep (NA, dim(substrateNoNa)[1])
+  # 
+  # abyssNa[!is.na(gridd)] <- abyss[,"area"]
+  # 
+  # abyssNa
+  
+}#eo getSingleGridData
+
+
+substrateLs <- lapply(featCov, getSingleGridData)
+
+substrate <- as.data.frame(substrate)
+
+colnames(substrate) <- names(substrateLs)
+
+
+  
 
 
 

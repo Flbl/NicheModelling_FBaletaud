@@ -24,6 +24,8 @@ library(readr)
 library(pryr)
 library(marmap)
 library(lubridate)
+library(broom)
+library(mregions)
 library(rgeos)
 
 
@@ -128,9 +130,9 @@ getCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
   print("Merging OBIS and NC datasets")
   OccsRaw <- merge(OBIS_occs, NC_occs, all = TRUE)
-  
+
   Occs <- OccsRaw[, names(NC_occs)]
-  
+
   
   
   
@@ -298,14 +300,14 @@ generateAbs <- function(Occs){
   
   sampleClasses <- function(r, n)  {
     
-    cellVal <- which(t(as.matrix(r)) == 2) # get All cells for class 2 (=Abs)
+      cellVal <- which(t(as.matrix(r)) == 2) # get All cells for class 2 (=Abs)
+      
+      samples <- sample(cellVal, n) # sample class's cell number
+      
+      return(samples)
+    }
     
-    samples <- sample(cellVal, n) # sample class's cell number
     
-    return(samples)
-  }
-  
-  
   pseudoAbsCells <- sampleClasses(antiAbs, length(OccsCells))
   
   pseudoAbs <- as.data.frame(xyFromCell(antiAbs, pseudoAbsCells))
@@ -317,7 +319,7 @@ generateAbs <- function(Occs){
   pseudoAbs$species <- Occs$species[1]
   
   pseudoAbs
-  
+
   
 } # eo generateAbs
 
@@ -365,12 +367,12 @@ names(cleandOccs) <- species
 #1. obtenir une liste de cellules uniques
 
 getCellList <- function(cleandoccs){
-  
+
   cellAll <-    unlist(lapply(cleandOccs,function(x){c(x$occs$cellNumber, x$abs$cellNumber)}))
   cellList <- unique(cellAll)
-  
+
   return(cellList)
-  
+
 }
 
 cellList <- getCellList(cleandOccs)
@@ -416,47 +418,47 @@ getCellTempData <- function(cellID){
   
   
   #call python stuff
-  
-  ## sourcing the function
-  source("./Scripts/CMEMS3567_GLO_Daily_by_Month_R/getCMEMS.R")
-  
-  ## parameters
+
+## sourcing the function
+source("./Scripts/CMEMS3567_GLO_Daily_by_Month_R/getCMEMS.R")
+
+## parameters
   
   myPythonPath <- "python"
   
   ## motu-client.py path
   ### this may change according to your computer configuration
   motu_cl_lib <- "./Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/motu-client-python-master/src/python/motu-client.py"
-  
-  
+
+
   ### call the function
   getCMEMS(scriptPath="./Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/CMEMS3567_GLO_Daily_by_Month_CallFromR.py",
-           python=myPythonPath,
-           motu_cl = motu_cl_lib,
-           log_cmems="fbaletaud",
-           pwd_cmems="FlorianCMEMS2017",
-           #Date
-           yyyystart="2006",
-           mmstart="12",
-           yyyyend="2016",
-           mmend="12",
-           hh=" 12:00:00",
-           dd="31",
-           # Area 
-           xmin=as.character(cellExt@xmin),
-           xmax=as.character(cellExt@xmax),
-           ymin=as.character(cellExt@ymin),
-           ymax=as.character(cellExt@ymax),
-           zmin="0.49", 
-           zmax="0.50", 
-           # Variables 
-           table_var_cmd = "thetao",
-           table_data_type = "TEMP_",
-           # Output files 
-           out_path =  outDir, #Make sure to end your path with "/" 
-           pre_name= "CMEMS_GLO_001_024_")
-  
-  
+         python=myPythonPath,
+         motu_cl = motu_cl_lib,
+         log_cmems="fbaletaud",
+         pwd_cmems="FlorianCMEMS2017",
+         #Date
+         yyyystart="2006",
+         mmstart="12",
+         yyyyend="2016",
+         mmend="12",
+         hh=" 12:00:00",
+         dd="31",
+         # Area 
+         xmin=as.character(cellExt@xmin),
+         xmax=as.character(cellExt@xmax),
+         ymin=as.character(cellExt@ymin),
+         ymax=as.character(cellExt@ymax),
+         zmin="0.49", 
+         zmax="0.50", 
+         # Variables 
+         table_var_cmd = "thetao",
+         table_data_type = "TEMP_",
+         # Output files 
+         out_path =  outDir, #Make sure to end your path with "/" 
+         pre_name= "CMEMS_GLO_001_024_")
+
+
 }#eo getCellTempData
 
 
@@ -518,7 +520,7 @@ getCellTempData <- function(cellID){
   
   ### call the function
   getCMEMS(scriptPath="D:/Florian/Documents/Universite/M1SBM/Stage/Travail_FBaletaud/Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/CMEMS3567_GLO_Daily_by_Month_CallFromR.py",
-           python=myPythonPath,
+          python=myPythonPath,
            motu_cl = motu_cl_lib,
            log_cmems="fbaletaud",
            pwd_cmems="FlorianCMEMS2017",
