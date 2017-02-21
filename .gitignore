@@ -1,11 +1,11 @@
-.Rproj
-.Rproj.user
-.Rhistory
-.RData
-.Ruserdata
+*.Rproj
+*.Rproj.user
+*.Rhistory
+*.RData
+*.Ruserdata
 Miscellaneous
 Biodiversity
 Environment
 *.html
 Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs
-.png
+*.png
