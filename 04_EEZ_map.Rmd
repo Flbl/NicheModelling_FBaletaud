@@ -80,6 +80,10 @@ head(substrate)
 
 The result is a dataframe containing the cells that are within the zee from the eezNcGrid raster (others would be NAs). The row names represent the cell numbers in the eezNcGrid rasterlayer.
 
+NB : The features indexed here might not be used by all the species that will be modelised. It happens for example that only one cell of "occurrence any species considered" intercept with one of the geomorphic features polygon and if 1 species is missing; it is impossible to model it using the variable.
+
+Therefore, when preparing the data for each species, another filter will need to be applied and some variables may disappear.
+
 
 
 
