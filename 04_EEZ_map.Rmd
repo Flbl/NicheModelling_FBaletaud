@@ -15,6 +15,7 @@ library(ncdf4)
 library(raster)
 library(rgeos)
 library(plyr)
+library(rgdal)
 ```
 
 # Main lines
@@ -32,7 +33,7 @@ read_chunk("./Scripts/04_EEZ_map.R")
 
 The first step is to get the NC's eez from the grid of the first model. We first recreate the earth grid from a random nc file covering the world extents.
 
-```{r EARTHgrid}
+```{r EARTHgrid, message=FALSE}
 
 plot(earthGrid)
 ```
@@ -44,7 +45,7 @@ Since we just want the raster layer, the values in each cells are not extremly r
 The shapefile of the countries EEZ has been downloaded from [marineregions.org](http://marineregions.org/), [here](http://marineregions.org/downloads.php) under the "Exclusive Economic Zones Boundaries (EEZ)" tab. After reading the huge shapefile, the 2 polygons concerning New Caledonia are extracted and used to crop the earthGrid raster to the study region. A what is called "eezNcGridPoly" is produced in the mean time for later use. It is basicaly the raster cells converted into polygons.
 
 
-```{r EEZgrid}
+```{r EEZgrid, message=FALSE}
 
 plot(eezNcGrid)
 plot(eezNcPoly, add = TRUE)
@@ -56,7 +57,7 @@ The different shapefiles of the geomorphic substrate layers downloaded from [Blu
 
 here's an example of the cropped coral layer
 
-```{r SubstrateCrop}
+```{r SubstrateCrop, message=FALSE}
 
 plot(eezNcGrid)
 plot(interCrss$Guyots, add = TRUE, col = "grey")
@@ -75,14 +76,52 @@ It is noticed that Seamounts are absents. But the guyots and rigdes are still pr
 In order to proceed, the projection had to be changed into a Behrman instead of WGS84. Therefore it is only an estimation of the surface for each cells considering they were still shaped as angular projection and not geographic. 
 
 ```{r ExtractCov}
+
 head(substrate)
 ```
 
 The result is a dataframe containing the cells that are within the zee from the eezNcGrid raster (others would be NAs). The row names represent the cell numbers in the eezNcGrid rasterlayer.
 
+### A glimpse at what it looks like
+
+Let's take 6 of the 10 variables and convert them to the raster
+
+
+```{r, echo=FALSE}
+
+substrateSpatial <-  SpatialPointsDataFrame(
+  coords = cbind(substrate$x, substrate$y),
+  data = substrate,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+
+featRast <- raster(extent(eezNcGrid))
+res(featRast) <- res(eezNcGrid)
+projection(featRast) <- proj4string(eezNcGrid)
+origin(featRast) <- origin(eezNcGrid)
+
+RidgesRast <- rasterize(substrateSpatial ,field = "Ridges", featRast)
+GuyotsRast <- rasterize(substrateSpatial ,field = "Guyots", featRast)
+CoralRast <- rasterize(substrateSpatial ,field = "Coral", featRast)
+SlopeRast <- rasterize(substrateSpatial ,field = "Slope", featRast)
+AbyssRast <- rasterize(substrateSpatial ,field = "Abyss", featRast)
+ShelfRast <- rasterize(substrateSpatial ,field = "Shelf", featRast)
+
+
+
+plot(RidgesRast, main = "Ridges")
+plot(GuyotsRast,main = "Guyots")
+plot(CoralRast, main = "Coral")
+plot(SlopeRast, main = "Slope")
+plot(AbyssRast, main = "Abyss")
+plot(ShelfRast,  main = "Shelf")
+
+```
+
+
 NB : The features indexed here might not be used by all the species that will be modelised. It happens for example that only one cell of "occurrence any species considered" intercept with one of the geomorphic features polygon and if 1 species is missing; it is impossible to model it using the variable.
 
-Therefore, when preparing the data for each species, another filter will need to be applied and some variables may disappear.
+Therefore, when handling single species data, some variables may disappear, depending on the the cells they are on.
 
 
 

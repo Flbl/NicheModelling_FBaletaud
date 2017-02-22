@@ -498,7 +498,31 @@ test <- as.matrix(substrate$Abyss)
 
 
 
+substrateSpatial <-  SpatialPointsDataFrame(
+  coords = cbind(substrate$x, substrate$y),
+  data = substrate,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
 
+
+featRast <- raster(extent(eezNcGrid))
+res(featRast) <- res(eezNcGrid)
+projection(featRast) <- proj4string(eezNcGrid)
+origin(featRast) <- origin(eezNcGrid)
+
+RidgesRast <- rasterize(substrateSpatial ,field = "Ridges", featRast)
+GuyotsRast <- rasterize(substrateSpatial ,field = "Guyots", featRast)
+CoralRast <- rasterize(substrateSpatial ,field = "Coral", featRast)
+SlopeRast <- rasterize(substrateSpatial ,field = "Slope", featRast)
+AbyssRast <- rasterize(substrateSpatial ,field = "Abyss", featRast)
+ShelfRast <- rasterize(substrateSpatial ,field = "Shelf", featRast)
+
+par(mfrow = c(2,2))
+plot(RidgesRast)
+plot(GuyotsRast)
+plot(CoralRast)
+plot(SlopeRast)
+plot(AbyssRast)
+plot(ShelfRast)
 
 
 
@@ -520,7 +544,9 @@ lapply(croppedNcPoly, plot, col = sample(colors(), 1), add = TRUE)
 # plot(croppedNcPoly[[10]], add = TRUE, col = sample(colors(), 1))
 
 
-
+# par(mfrow = c(3,2))
+# par(oma = c(0.1, 0.1, 0.1, 0.1))
+layout(matrix(c(1,2,3,4,5,6), nrow = 3, ncol = 2, byrow = TRUE), widths = 5, heights = 2 )
 
 
 

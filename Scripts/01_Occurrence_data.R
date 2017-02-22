@@ -26,9 +26,9 @@ library(marmap)
 library(lubridate)
 library(rgeos)
 
+# @knitr EARTHgrid
 
-
-# Reading/creating the earth GRID a transformer en fonction
+# Reading/creating the earth GRID 
 
 earthGrid<-nc_open("./Environment/temp/earthgrid/global-analysis-forecast-phy-001-024.nc") # Open any nc file from the bioclimatic data used
 

@@ -270,22 +270,28 @@ getSingleGridData <- function(x, gridd = gridCells){
   
   rownames(abyss) <- rownames(substrateNoNa)
   
-  abyss
+  # abyss # To directly get the dataframe of 1 column with the area of cells "in ocean" detailed in rownames (length = 17105)
   
-  # abyssNa <- rep (NA, dim(substrateNoNa)[1])
-  # 
-  # abyssNa[!is.na(gridd)] <- abyss[,"area"]
-  # 
-  # abyssNa
+  abyssNa <- rep (NA, dim(substrateNoNa)[1])
+
+  abyssNa[!is.na(gridd)] <- abyss[,"area"]
+
+  abyssNa # To get a complete list of the cells from eezNcGrid with the value associated (length = 29592)
   
 }#eo getSingleGridData
 
-
-substrateLs <- lapply(featCov, getSingleGridData)
+substrate <- lapply(featCov, getSingleGridData)
 
 substrate <- as.data.frame(substrate)
 
-colnames(substrate) <- names(substrateLs)
+substrate <- cbind(coordinates(eezNcGrid), substrate)
+substrate <- na.omit(substrate)
+
+# substrateLs <- lapply(featCov, getSingleGridData) # If getSingleGridData returned abyss
+# 
+# substrate <- as.data.frame(substrateLs) # If getSingleGridData returned abyss
+# 
+# colnames(substrate) <- names(substrateLs) # If getSingleGridData returned abyss
 
 
   

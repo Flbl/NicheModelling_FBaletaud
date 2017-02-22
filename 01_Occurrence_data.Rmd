@@ -1,0 +1,33 @@
+---
+title: "01_Occurrence_data.R"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rmarkdown)
+library(knitr)
+
+library(rgbif)
+library(taxize)
+library(taxizesoap)
+library(devtools)
+library(robis)
+library(leaflet)
+library(tibble)
+library(rgdal)
+library(dplyr)
+library(sp)
+library(ncdf4)
+library(raster)
+library(rgeos)
+
+library(ggmap)
+library(stringr)
+library(readr)
+library(pryr)
+library(marmap)
+library(lubridate)
+
+
+```
