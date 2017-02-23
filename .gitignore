@@ -6,6 +6,8 @@
 Miscellaneous
 Biodiversity
 Environment
+data
 *.html
 Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs
 *.png
+.Rproj.user

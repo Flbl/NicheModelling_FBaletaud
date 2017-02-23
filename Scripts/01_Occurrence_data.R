@@ -26,30 +26,10 @@ library(marmap)
 library(lubridate)
 library(rgeos)
 
-# @knitr EARTHgrid
 
-# Reading/creating the earth GRID 
+earthGrid <- raster("./data/interdata/earthGrid.tif")
 
-earthGrid<-nc_open("./Environment/temp/earthgrid/global-analysis-forecast-phy-001-024.nc") # Open any nc file from the bioclimatic data used
-
-
-earthGrid<-ncvar_get(earthGrid,"thetao")
-
-
-
-earthGrid[(is.na(earthGrid))]<-1000
-earthGrid[(earthGrid<1000)]<-NA
-earthGrid[(earthGrid == 1000)]<-1
-earthGrid<-earthGrid[,order(c(1:ncol(earthGrid)),decreasing=T)] # Inverting coordinates to replace them right
-
-earthGrid <- raster(nrows = 2041, ncols = 4320, xmn = -180, xmx = 179.9167, ymn = -80, ymx = 90, crs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0", vals = as.vector(earthGrid)) # Check the coordinates of the frame on copernicus
-
-earthRegion <- readOGR(dsn = "./Environment/GSHHS_region", layer = "GSHHS_f_L1")
-
-
-
-
-
+earthRegion <- readOGR(dsn = "./data/rawdata/Environment/GSHHS_region", layer = "GSHHS_f_L1")
 
 
 getCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
@@ -74,7 +54,7 @@ getCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
     my_sp <- checkSp
     
   }
-  review = data.frame(Entered_Name = checkSp, Reason = checkSp_taxo$unacceptreason, Accepted_Name = my_sp)
+  review <- data.frame(Entered_Name = checkSp, Reason = checkSp_taxo$unacceptreason, Accepted_Name = my_sp)
   print(review)
   
   
@@ -83,15 +63,15 @@ getCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   # OBISSP function
   
   print("total number of records available")
-  my_sp_summ = checklist(my_sp)
+  my_sp_summ <- checklist(my_sp)
   print(my_sp_summ$records)
   
   print("Getting data through Quality Flags :")
   
-  OBIS_occs = occurrence(my_sp, qc = qc)
+  OBIS_occs <- occurrence(my_sp, qc = qc)
   
   print("Keeping only occurrences after 1980")
-  OBIS_occs = OBIS_occs[OBIS_occs$yearcollected >= 1980,]
+  OBIS_occs <- OBIS_occs[OBIS_occs$yearcollected >= 1980,]
   
   # if (nrow(OBIS_occs) <= 2) stop("Not enough records")
   
@@ -107,10 +87,10 @@ getCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   if (nrow(OBIS_occs) >= 1) OBIS_occs$occurrence = 1
   
   ## Reading/formatting the dataset
-  NCRecords <- read.table("./Biodiversity/dataset_fitted.csv", sep = ";", dec = ",", header = TRUE) 
+  NCRecords <- read.table("./data/rawdata/Biodiversity/dataset_fitted.csv", sep = ";", dec = ",", header = TRUE) 
   print("Creating/Formatting the NC dataset")
-  match = paste(substring(my_sp, 1,1), "_" ,unlist(strsplit(my_sp, " "))[2], sep = "", collapse = "")
-  matchCol = grep(match,names(NCRecords))
+  matchSp = paste(substring(my_sp, 1,1), "_" ,unlist(strsplit(my_sp, " "))[2], sep = "", collapse = "")
+  matchCol = grep(matchSp,names(NCRecords))
   names(NCRecords)[matchCol] <- my_sp
   
   NC_occs <- NCRecords[,c(2,3, matchCol)]
@@ -196,7 +176,7 @@ getCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
     proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
   )
   
-  # earthRegion <- readOGR(dsn = "./Environment/GSHHS_region", layer = "GSHHS_f_L1")
+  # earthRegion <- readOGR(dsn = "./data/rawdata/Environment/GSHHS_region", layer = "GSHHS_f_L1")
   
   is_occ_terrest <- gIntersects(occsSpatial,earthRegion, byid = TRUE, returnDense = FALSE)
   
@@ -251,7 +231,7 @@ generateAbs <- function(Occs){
   ## Generate auto paths to species shapefile
   my_sp <- Occs$species[1]
   
-  pathSp = paste("./Biodiversity/iucn/", my_sp, sep = "", collapse = "")
+  pathSp = paste("./data/rawdata/Biodiversity/iucn/", my_sp, sep = "", collapse = "")
   
   layerSp = sub(".shp", "", list.files(path = pathSp, full.names = FALSE, pattern = ".shp")[1])
   
@@ -277,11 +257,11 @@ generateAbs <- function(Occs){
   
   cat("merging earthGrid and IUCN rangemap raster\n")
   
-  antiAbs <- merge(earthGrid, rasIucnOccs)
+  antiAbs <- merge(rasIucnOccs,earthGrid)
   
   # antiAbs[is.na(antiAbs)] <- 2
   
-  antiAbs <- reclassify(antiAbs, cbind(NA,2)) # Assigning 2 for cells outside the range
+  # antiAbs <- reclassify(antiAbs, cbind(NA,2)) # Assigning 2 for cells outside the range # Done while generating earthGrid
   
   
   
@@ -306,7 +286,7 @@ generateAbs <- function(Occs){
   }
   
   
-  pseudoAbsCells <- sampleClasses(antiAbs, length(OccsCells))
+  pseudoAbsCells <- sampleClasses(antiAbs, length(OccsCells)) # multiply length(OccsCells) if we want another ratio than 50% of prevalence
   
   pseudoAbs <- as.data.frame(xyFromCell(antiAbs, pseudoAbsCells))
   
@@ -358,114 +338,6 @@ names(cleandOccs) <- species
 
 
 
-####################################
-# recup env pour les cellules eelctionnées
-####################################
-
-#1. obtenir une liste de cellules uniques
-
-getCellList <- function(cleandoccs){
-  
-  cellAll <-    unlist(lapply(cleandOccs,function(x){c(x$occs$cellNumber, x$abs$cellNumber)}))
-  cellList <- unique(cellAll)
-  
-  return(cellList)
-  
-}
-
-cellList <- getCellList(cleandOccs)
-
-# #2. create a function returning cell extent from cell number
-# getCellExtent <- function(cellList, raster = earthGrid){
-# 
-#   extOfCells <- lapply(lapply( X = cellList, rasterFromCells, x = raster), extent)
-# 
-#   names(extOfCells) <- cellList
-# 
-#   extOfCells
-# 
-# }#eo getCellExtent
-
-
-#2. create a function returning cell extent from cell number
-getCellExtent <- function(cellID, raster = earthGrid){
-  
-  extOfCells <- extent(rasterFromCells(raster, cellID))
-  
-  extOfCells
-  
-}#eo getCellExtent
-
-
-
-#3. function that download temp data for a cell
-
-
-getCellTempData <- function(cellID){
-  
-  #out dir
-  patName <- paste0("./Environment/temp/rawData/",cellID)
-  dir.create(patName)
-  outDir <- paste0("./Environment/temp/rawData/",cellID,"/")
-  
-  #cell Extent
-  cellExt <- getCellExtent(cellID)
-  
-  # cellID <- cellExt[[1]]
-  
-  
-  
-  #call python stuff
-  
-  ## sourcing the function
-  source("./Scripts/CMEMS3567_GLO_Daily_by_Month_R/getCMEMS.R")
-  
-  ## parameters
-  
-  myPythonPath <- "python"
-  
-  ## motu-client.py path
-  ### this may change according to your computer configuration
-  motu_cl_lib <- "./Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/motu-client-python-master/src/python/motu-client.py"
-  
-  
-  ### call the function
-  getCMEMS(scriptPath="./Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/CMEMS3567_GLO_Daily_by_Month_CallFromR.py",
-           python=myPythonPath,
-           motu_cl = motu_cl_lib,
-           log_cmems="fbaletaud",
-           pwd_cmems="FlorianCMEMS2017",
-           #Date
-           yyyystart="2006",
-           mmstart="12",
-           yyyyend="2016",
-           mmend="12",
-           hh=" 12:00:00",
-           dd="31",
-           # Area 
-           xmin=as.character(cellExt@xmin),
-           xmax=as.character(cellExt@xmax),
-           ymin=as.character(cellExt@ymin),
-           ymax=as.character(cellExt@ymax),
-           zmin="0.49", 
-           zmax="0.50", 
-           # Variables 
-           table_var_cmd = "thetao",
-           table_data_type = "TEMP_",
-           # Output files 
-           out_path =  outDir, #Make sure to end your path with "/" 
-           pre_name= "CMEMS_GLO_001_024_")
-  
-  
-}#eo getCellTempData
-
-
-
-#test
-getCellTempData(cellList[1])
-
-
-lapply(cellList,getCellTempData)
 
 
 
@@ -488,104 +360,6 @@ lapply(cellList,getCellTempData)
 
 
 
-
-getCellTempData <- function(cellID){
-  
-  #out dir
-  patName <- paste0("/home/florian/Travail_FBaletaud/Environment/temp/rawData/",cellID)
-  dir.create(patName)
-  outDir <- paste0("D:\\Florian\\Documents\\Universite\\M1SBM\\Stage\\Travail_FBaletaud\\Environment\\temp\\rawData\\",cellID,"\\")
-  
-  #cell Extent
-  cellExt <- getCellExtent(cellID)
-  
-  
-  # cellID <- cellExt[[1]]
-  
-  #call python stuff
-  
-  ### python.exe path
-  myPythonPath <- "D:\Florian\Documents\Universite\M1SBM\Stage\Python27\python.exe"
-  
-  ## sourcing the function
-  source("D:/Florian/Documents/Universite/M1SBM/Stage/CMEMS3567_GLO_Daily_by_Month_R/getCMEMS.R")
-  
-  ## parameters
-  
-  ### motu-client.py path
-  motu_cl_lib <- "D:/Florian/Documents/Universite/M1SBM/Stage/Travail_FBaletaud/Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/motu-client-python-master/src/python/motu-client.py"
-  
-  
-  ### call the function
-  getCMEMS(scriptPath="D:/Florian/Documents/Universite/M1SBM/Stage/Travail_FBaletaud/Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs/CMEMS3567_GLO_Daily_by_Month_CallFromR.py",
-           python=myPythonPath,
-           motu_cl = motu_cl_lib,
-           log_cmems="fbaletaud",
-           pwd_cmems="FlorianCMEMS2017",
-           #Date
-           yyyystart="2006",
-           mmstart="12",
-           yyyyend="2016",
-           mmend="12",
-           hh=" 12:00:00",
-           dd="31",
-           # Area 
-           xmin=as.character(cellExt@xmin),
-           xmax=as.character(cellExt@xmax),
-           ymin=as.character(cellExt@ymin),
-           ymax=as.character(cellExt@ymax),
-           zmin="0.49", 
-           zmax="0.50", 
-           # Variables 
-           table_var_cmd = "thetao",
-           table_data_type = "TEMP_",
-           # Output files 
-           out_path =  outDir, #Make sure to end your path with "/" 
-           pre_name= "CMEMS_GLO_001_024_")
-  
-  
-  
-  
-  
-}#eo getCellTempData
-
-
-
-
-
-
-
-#####################################
-
-
-# Cambly <- getOccsAbs("Carcharhinus_amblyrhynchos")
-# 
-# CamblyAbs <- Cambly[[2]]
-
-
-
-# 
-# getCellsExtent <- function(occs, abs){
-# 
-# 
-#   extOfCells <- lapply(lapply( X = OccsCells, rasterFromCells, x = OccsRast), extent)
-# 
-#   # extOfCells[[1]]
-# 
-#   extOfCells
-# 
-# }
-# 
-# 
-# Camblycells_ext <- getCellsExtent(Occs)
-
-
-
-
-# Plotting for verification
-leaflet() %>%
-  addProviderTiles("Esri.WorldImagery") %>%
-  addCircleMarkers(data = data.frame(lat = Occs$decimalLatitude[21], lng = Occs$decimalLongitude[21]), radius = 3.5, weight = 0, fillColor = "orange", fillOpacity = 1)
 
 
 
