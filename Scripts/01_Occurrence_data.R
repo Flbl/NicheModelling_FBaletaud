@@ -27,10 +27,15 @@ library(lubridate)
 library(rgeos)
 
 
+# @knitr LoadMaps
+
+
 earthGrid <- raster("./data/interdata/earthGrid.tif")
 
 earthRegion <- readOGR(dsn = "./data/rawdata/Environment/GSHHS_region", layer = "GSHHS_f_L1")
 
+
+# @knitr GetOccsFunc
 
 getCleanedOcc = function(my_sp, qc = c(1:7,10:19,21:30)){
   
@@ -302,7 +307,7 @@ generateAbs <- function(Occs){
 } # eo generateAbs
 
 
-
+# @knitr GetOccsAbsFunc
 
 getOccsAbs <- function(my_sp){
   
@@ -318,7 +323,7 @@ getOccsAbs <- function(my_sp){
 }
 
 
-
+# @knitr GetSpeciesData
 
 species <- c("Carcharhinus_amblyrhynchos","Carcharhinus_melanopterus","Triaenodon_obesus")
 

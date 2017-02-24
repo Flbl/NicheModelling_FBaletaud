@@ -1,0 +1,49 @@
+---
+title: "01_Occurrence_data.R"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rmarkdown)
+library(knitr)
+
+library(rgbif)
+library(taxize)
+library(taxizesoap)
+library(devtools)
+library(robis)
+library(leaflet)
+library(tibble)
+library(rgdal)
+library(dplyr)
+library(sp)
+library(ncdf4)
+library(raster)
+library(rgeos)
+
+library(ggmap)
+library(stringr)
+library(readr)
+library(pryr)
+library(marmap)
+library(lubridate)
+
+
+```
+
+
+# Main lines
+
+This Rmd is aimed at describing how the script 01_Occurrence_data.R works while running it. It starts with reading the grids/maps that will be used to work with the occurrences. Then, a function does all the work for the data generation. It first checks for the species names entered and retrieves online data through the robis API on the OBIS datasets. After applying some filters (Quality flags and more) to only the OBIS data to ensure its quality, the New Caledonian dataset used for this study is merged with. Manual filters are applied again, especially concerning occurrences happening on earth and duplicates.
+
+# The script
+
+We start off by reading the script. This Rmd file should be in the main directory of the working directory.
+```{r}
+read_chunk("../Scripts/01_Occurrence_data.R")
+```
+
+
+
+
