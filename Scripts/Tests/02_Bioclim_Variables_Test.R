@@ -84,3 +84,41 @@ x <- ncTemps[,,1]
 r <- raster(x, xmn = nclat[1], xmx = nclat[2], ymn = nclon[1], ymx = nclon[2], crs = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
 plot(r, add = TRUE)
 
+
+
+
+
+
+
+
+
+
+
+##########################################
+#using the second getCMEMS function
+
+
+#getCMEMS
+jan <- nc_open("./Scripts/getCMEMS/downs/global-analysis-forecast-phy-001-024_thetao_2013-01.nc")
+
+# Read longitude & latitude
+lon <- ncvar_get(jan, "longitude")
+lat <- ncvar_get(jan, "latitude")
+
+#Read the time
+time_jan <- ncvar_get(jan, "time")
+
+length(time_jan) == length(res)
+
+
+#monthly
+
+mon <- nc_open("downs/monthly_global-analysis-forecast-phy-001-024_thetao_2013-01.nc")
+
+#Read the time
+time_mon <- ncvar_get(mon, "time")
+
+length(time_mon) == length(res_monthly)
+
+
+

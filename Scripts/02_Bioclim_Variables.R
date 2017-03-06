@@ -44,7 +44,80 @@ getCellExtent <- function(cellID, raster = earthGrid){
 
 
 
+
 #3. function that download temp data for a cell
+
+getCellTempData <- function(cellID){
+  
+  #out dir
+  patName <- paste0("./Scripts/getCMEMS/downs/",cellID)
+  dir.create(patName)
+  outDir <- paste0("./Scripts/getCMEMS/downs/",cellID,"/")
+  
+  #cell Extent
+  cellExt <- getCellExtent(cellID)
+
+## sourcing the function
+source("./Scripts/getCMEMS/getCMEMS.R")
+
+## parameters
+
+### motu-client.py path
+### this may chnage according to your computer configuration
+motu_cl_lib <- "./Scripts/getCMEMS/libs/motu-client-python-master/src/python/motu-client.py"
+
+### output dir
+outDir <- "./Scripts/getCMEMS/downs/"
+
+### credentials (in cred.txt)
+source("./Scripts/getCMEMS/cred.txt")
+
+### call the functions
+res <- getCMEMS(motu_cl = motu_cl_lib , 
+                out_path = outDir,
+                log_cmems = log,
+                pwd_cmems = pass,
+                # Date 
+                yyyystart="2013",
+                mmstart="01",
+                yyyyend="2013",
+                mmend="03",
+                hh=" 12:00:00",
+                dd="01",
+                # Area 
+                xmin=as.character(cellExt@xmin),
+                xmax=as.character(cellExt@xmax),
+                ymin=as.character(cellExt@ymin),
+                ymax=as.character(cellExt@ymax))
+
+}
+
+res_monthly <- getCMEMS_monthly(motu_cl = motu_cl_lib , 
+                                out_path = outDir,
+                                log_cmems = log,
+                                pwd_cmems = pass,
+                                # Date 
+                                yyyystart="2013",
+                                mmstart="01")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 getCellTempData <- function(cellID){
