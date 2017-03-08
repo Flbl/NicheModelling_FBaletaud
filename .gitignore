@@ -11,3 +11,9 @@ data
 Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs
 *.png
 .Rproj.user
+
+# For the getCMEMS Function
+
+getCMEMS/downs
+getCMEMS/cred.txt
+getCMEMS/.gitignore
