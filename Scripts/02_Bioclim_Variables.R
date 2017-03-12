@@ -12,6 +12,9 @@ library(ncdf4)
 library(tools)
 library(rgeos)
 
+earthGrid <- raster("./data/interdata/earthGrid.tif")
+
+eezNcGrid <- raster("./data/interdata/eezNcGrid.tif")
 
 
 #########################################################################

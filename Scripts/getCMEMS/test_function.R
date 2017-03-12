@@ -29,13 +29,15 @@ res <- getCMEMS(motu_cl = motu_cl_lib ,
 	    yyyystart="2013",
 	    mmstart="01",
 	    yyyyend="2013",
-	    mmend="03",
+	    mmend="02",
 	    hh=" 12:00:00",
 	    dd="01",
-	    xmin="163.473146",
-	    xmax="163.633146",
-	    ymin="-21.523697",
-	    ymax="-21.363697")
+	    xmin="-176.6674",
+	    xmax="-176.5841",
+	    ymin="0.7937286",
+	    ymax="0.8770211",
+	    zsmall="0.494", 
+	    zbig="1")
 
 
 
@@ -45,7 +47,14 @@ res_monthly <- getCMEMS_monthly(motu_cl = motu_cl_lib ,
 		        pwd_cmems = pass,
 		        # Date 
 		        yyyystart="2013",
-		        mmstart="01")
+		        mmstart="02",
+		        #extents
+		        xmin="-176.6674",
+		        xmax="-176.5841",
+		        ymin="0.7937286",
+		        ymax="0.8770211",
+		        zsmall="0.494", 
+		        zbig="1")
 
 ## ---- ReadResults
 library(ncdf4)
@@ -63,10 +72,12 @@ time_jan <- ncvar_get(jan, "time")
 
 length(time_jan) == length(res)
 
+# Read values
+temp_jan <- ncvar_get(jan,"thetao")
 
 #monthly
 
-mon <- nc_open("./Scripts/getCMEMS/downs/monthly_global-analysis-forecast-phy-001-024_thetao_2013-01.nc")
+mon <- nc_open("./Scripts/getCMEMS/downs/monthly_global-analysis-forecast-phy-001-024_thetao_2013-02.nc")
 
 #Read the time
 time_mon <- ncvar_get(mon, "time")
