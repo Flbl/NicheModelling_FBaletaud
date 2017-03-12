@@ -1,3 +1,17 @@
+# For the getCMEMS Function
+
+downs
+*.txt
+
+
+
+
+
+
+
+
+
+
 # History files
 .Rhistory
 .Rapp.history

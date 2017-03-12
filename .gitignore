@@ -12,8 +12,3 @@ Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs
 *.png
 .Rproj.user
 
-# For the getCMEMS Function
-
-Scripts/getCMEMS/downs
-Scripts/getCMEMS/cred.txt
-Scripts/getCMEMS/.gitignore
