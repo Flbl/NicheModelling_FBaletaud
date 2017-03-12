@@ -14,6 +14,6 @@ Scripts/CMEMS3567_GLO_Daily_by_Month_R/libs
 
 # For the getCMEMS Function
 
-getCMEMS/downs
-getCMEMS/cred.txt
-getCMEMS/.gitignore
+Scripts/getCMEMS/downs
+Scripts/getCMEMS/cred.txt
+Scripts/getCMEMS/.gitignore
