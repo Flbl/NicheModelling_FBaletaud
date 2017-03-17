@@ -113,7 +113,13 @@ length(time_jan) == length(res)
 
 #monthly
 
-mon <- nc_open("downs/monthly_global-analysis-forecast-phy-001-024_thetao_2013-01.nc")
+mon <- nc_open("./Scripts/getCMEMS/downs/monthly_global-analysis-forecast-phy-001-024_thetao_2013-01.nc")
+
+# Read values
+temp_mon <- ncvar_get(jan,"thetao")
+
+lon <- ncvar_get(mon, "longitude")
+lat <- ncvar_get(mon, "latitude")
 
 #Read the time
 time_mon <- ncvar_get(mon, "time")
@@ -121,4 +127,14 @@ time_mon <- ncvar_get(mon, "time")
 length(time_mon) == length(res_monthly)
 
 
+# Convert to raster
 
+# monrast <- raster(temp_mon[,,1], xmn = lon[1], xmx = lon[2], ymn = lat[1], ymx = lat[2], crs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+xyz <- data.frame(x=lon, y = lat, z = temp_mon[1])
+monrast <- rasterFromXYZ(xyz, res = res(earthGrid), crs = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+plot(monrast)
+
+#occ point from this data
+occPt <- SpatialPoints(coords = cbind(cleandOccs[[1]][[1]][1,2], cleandOccs[[1]][[1]][1,1]),
+              proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+plot(occPt, add = TRUE)
