@@ -138,3 +138,304 @@ plot(monrast)
 occPt <- SpatialPoints(coords = cbind(cleandOccs[[1]][[1]][1,2], cleandOccs[[1]][[1]][1,1]),
               proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
 plot(occPt, add = TRUE)
+
+
+
+
+
+
+
+## Trying to make getCellTempsData to work
+
+getCellTempData <- function(cellID,
+                            python = "python",  #path to python executable
+                            motu_cl = "libs/motu-client-python-master/src/python/motu-client.py", #path to 'motu-client.py' (https://github.com/clstoulouse/motu-client-python),
+                            # Login Credentials
+                            log_cmems=log,   
+                            pwd_cmems=pass, 
+                            # Motu Server and chosen Product/Dataset
+                            motu_sc="http://nrtcmems.mercator-ocean.fr/mis-gateway-servlet/Motu",
+                            serv_id="http://purl.org/myocean/ontology/service/database#GLOBAL_ANALYSIS_FORECAST_PHY_001_024-TDS",
+                            dataset_id="global-analysis-forecast-phy-001-024",
+                            # Date 
+                            yyyystart="2013",
+                            mmstart="12",
+                            # Area 
+                            xmin=as.character(cellExt[1,1]),
+                            xmax=as.character(cellExt[1,1]),
+                            ymin=as.character(cellExt[1,2]),
+                            ymax=as.character(cellExt[1,2]),
+                            zsmall="0.494", 
+                            zbig="1",
+                            # Variables 
+                            var = "thetao",
+                            # Output files 
+                            out_path = paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/",cellID,"/"), #Make sure to end your path with "/" 
+                            pre_name= "monthly_"){
+  
+  
+  #cell Extent
+  cellExt <- getCellCentr(cellID)
+  
+  ## sourcing the function
+  source("./Scripts/getCMEMS/getCMEMS.R")
+  
+  ## parameters
+  
+  ### motu-client.py path
+  ### this may chnage according to your computer configuration
+  motu_cl_lib <- "./Scripts/getCMEMS/libs/motu-client-python-master/src/python/motu-client.py"
+  
+  ### output dir
+  # outDir <- paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/",cellID,"/")
+  
+  ### credentials (in cred.txt)
+  source("./Scripts/getCMEMS/cred.txt")
+  
+  
+  
+  
+  getCMEMS_monthly(motu_cl = motu_cl_lib , 
+                   out_path = out_path,
+                   log_cmems = log_cmems,
+                   pwd_cmems = pwd_cmems,
+                    # Date 
+                    yyyystart="2013",
+                    mmstart="01",
+                    # Area 
+                    xmin=xmin,
+                    xmax=xmax,
+                    ymin=ymin,
+                    ymax=ymax,
+                    zsmall=zsmall, 
+                    zbig=zbig,
+                    #OutPath
+                    out_path = out_path)
+  
+  
+  
+} # eo getCellTempData
+
+
+
+
+
+#4. lapply the function that download temp data for a cell
+
+TempData <- lapply(c(4622441,4657003), getCellTempData)
+
+TempData <- lapply(4657003, getCellTempData)
+ 
+
+
+
+
+res_monthly <- lapply(list(4622441, 4657003), getCMEMS_monthly(motu_cl = motu_cl_lib , 
+                                out_path = outDir,
+                                log_cmems = log,
+                                pwd_cmems = pass,
+                                # Date 
+                                yyyystart="2013",
+                                mmstart="01",
+                                #extents
+                                xmin="-176.6244",
+                                xmax="-176.6244",
+                                ymin="0.80875",
+                                ymax="0.80875",
+                                zsmall="0.494", 
+                                zbig="1"))
+
+
+
+
+
+TempData <- lapply(yearSeq,lapply(monthSeq, lapply(clist, function(cellID){
+  
+  #cell Extent
+  cellExt <- getCellCentr(cellID)
+  
+  ## sourcing the function
+  source("./Scripts/getCMEMS/getCMEMS.R")
+  
+  ## parameters
+  
+  ### motu-client.py path
+  ### this may chnage according to your computer configuration
+  motu_cl_lib <- "./Scripts/getCMEMS/libs/motu-client-python-master/src/python/motu-client.py"
+  
+  ### output dir
+  # dir.create(path = paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/",cellID))
+  # outDir <- paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/",cellID,"/")
+  outDir <- paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/")
+  
+  ### credentials (in cred.txt)
+  source("./Scripts/getCMEMS/cred.txt")
+  
+  prename= paste0("monthly_",cellID)
+  
+  
+  res_monthly <- getCMEMS_monthly(motu_cl = motu_cl_lib ,
+                                  log_cmems = log,
+                                  pwd_cmems = pass,
+                                  # Date 
+                                  yyyystart=yearSeq,
+                                  mmstart=monthSeq,
+                                  # Area 
+                                  xmin=as.character(cellExt[1,1]),
+                                  xmax=as.character(cellExt[1,1]),
+                                  ymin=as.character(cellExt[1,2]),
+                                  ymax=as.character(cellExt[1,2]),
+                                  zsmall="0.494", 
+                                  zbig="1",
+                                  #OutPath
+                                  out_path = outDir,
+                                  pre_name= prename)
+  
+  res_monthly
+  
+} # eo fct
+
+)
+)
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#3. function that download temp data for a cell
+
+getCellTempData <- function(cellID){
+  
+  
+  #cell Extent
+  cellExt <- getCellCentr(cellID)
+  
+  ## sourcing the function
+  source("./Scripts/getCMEMS/getCMEMS.R")
+  
+  ## parameters
+  
+  ### motu-client.py path
+  ### this may chnage according to your computer configuration
+  motu_cl_lib <- "./Scripts/getCMEMS/libs/motu-client-python-master/src/python/motu-client.py"
+  
+  ### output dir
+  dir.create(path = paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/",cellID))
+  outDir <- paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/",cellID,"/")
+  
+  ### credentials (in cred.txt)
+  source("./Scripts/getCMEMS/cred.txt")
+  
+  
+  
+  
+  res_monthly <- getCMEMS_monthly(motu_cl = motu_cl_lib ,
+                                  log_cmems = log,
+                                  pwd_cmems = pass,
+                                  # Date 
+                                  yyyystart="2013",
+                                  mmstart="01",
+                                  # Area 
+                                  xmin=as.character(cellExt[1,1]),
+                                  xmax=as.character(cellExt[1,1]),
+                                  ymin=as.character(cellExt[1,2]),
+                                  ymax=as.character(cellExt[1,2]),
+                                  zsmall="0.494", 
+                                  zbig="1",
+                                  #OutPath
+                                  out_path = outDir)
+  
+  res_monthly
+  
+} # eo getCellTempData
+
+
+test <- getCellTempData(4622441)
+
+
+#4. lapply the function that download temp data for a cell
+
+TempData <- lapply(list(4622441,4657003), getCellTempData)
+
+
+
+
+#4. for loop for all cells
+
+## sourcing the function
+source("./Scripts/getCMEMS/getCMEMS.R")
+
+### credentials (in cred.txt)
+source("./Scripts/getCMEMS/cred.txt")
+
+### motu-client.py path
+### this may chnage according to your computer configuration
+motu_cl_lib <- "./Scripts/getCMEMS/libs/motu-client-python-master/src/python/motu-client.py"
+
+getCellTempData <- function(cellList){
+  
+  for(cellID in cellList){
+    
+    #cell Extent
+    cellExt <- getCellCentr(cellID)
+    
+    # Output directory
+    outDir <- paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/",cellID,"/")
+    
+    #getCMEMS
+    res_monthly[cellID] <- getCMEMS_monthly(motu_cl = motu_cl_lib ,
+                                            log_cmems = log,
+                                            pwd_cmems = pass,
+                                            # Date 
+                                            yyyystart="2013",
+                                            mmstart="01",
+                                            # Area 
+                                            xmin=as.character(cellExt[1,1]),
+                                            xmax=as.character(cellExt[1,1]),
+                                            ymin=as.character(cellExt[1,2]),
+                                            ymax=as.character(cellExt[1,2]),
+                                            zsmall="0.494", 
+                                            zbig="1",
+                                            #OutPath
+                                            out_path = outDir)
+    
+    
+    
+    
+  }
+  
+}
+
+tempData <- getCellTempData(cellList)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

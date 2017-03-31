@@ -15,7 +15,8 @@ source("./Scripts/getCMEMS/getCMEMS.R")
 motu_cl_lib <- "./Scripts/getCMEMS/libs/motu-client-python-master/src/python/motu-client.py"
 
 ### output dir
-outDir <- "./Scripts/getCMEMS/downs/"
+dir.create(path = paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/",cellID))
+outDir <- paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/",cellID,"/")
 
 ### credentials (in cred.txt)
 source("./Scripts/getCMEMS/cred.txt")
