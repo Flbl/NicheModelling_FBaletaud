@@ -62,7 +62,8 @@ library(ncdf4)
 
 
 #getCMEMS
-jan <- nc_open("./Scripts/getCMEMS/downs/global-analysis-forecast-phy-001-024_thetao_2013-01.nc")
+fev <- nc_open("./data/rawdata/Environment/temp/CMEMS/monthly_3201152global-analysis-forecast-phy-001-024_thetao_2007-02.nc")
+fev2 <- nc_open("./data/rawdata/Environment/temp/CMEMS/monthly_3201152global-analysis-forecast-phy-001-024_thetao_2016-02.nc")
 
 # Read longitude & latitude
 lon <- ncvar_get(jan, "longitude")
@@ -74,7 +75,8 @@ time_jan <- ncvar_get(jan, "time")
 length(time_jan) == length(res)
 
 # Read values
-temp_jan <- ncvar_get(jan,"thetao")
+temp_fev <- ncvar_get(fev,"thetao")
+temp_fev2 <- ncvar_get(fev2,"thetao")
 
 #monthly
 

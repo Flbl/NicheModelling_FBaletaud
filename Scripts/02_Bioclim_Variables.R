@@ -114,18 +114,32 @@ getCellTempData <- function(clist, monthSeq, yearSeq){
 TempData <- getCellTempData(clist, monthSeq, yearSeq)
 
 
+#Generating final form dataFrame
 
+temp <- data.frame(cellID = cellList, MAT = 0)
 
+# reading cell files and storing them
 
+cellFileList <- dir("./data/rawdata/Environment/temp/CMEMS")
 
+#Function (to do) generating variable for one cell
 
+cellFileList <- cellFileList[grep(as.character(cellID),cellFileList)]
 
+cellFileList <- paste0("./data/rawdata/Environment/temp/CMEMS","/", cellFileList)
 
+cellFiles <- lapply(cellFileList, nc_open)
 
+cellFiles <- lapply(cellFiles, ncvar_get, varid = "thetao")
 
+#annual mean
+meanTemp <-  mean(unlist(cellFiles))
 
+#minimum
+minTemp <- min(unlist(cellFiles))
 
-
+#Max
+maxTemp <- max(unlist(cellFiles))
 
 
 
