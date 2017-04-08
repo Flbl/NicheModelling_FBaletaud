@@ -45,6 +45,7 @@ getCellCentr <- function(cellID, raster = earthGrid){
   
 }#eo getCellCentro
 
+####################################################
 
 #3. function that download temp data for a cell
 
@@ -75,48 +76,47 @@ getCellTempData <- function(clist, monthSeq, yearSeq){
   
   outDir <- paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/")
   
- lapply(yearSeq, function(year){
-  
-   lapply(monthSeq, function(month){
-  
-    lapply(clist, function(cellID){
+  lapply(yearSeq, function(year){ # Inverser clist et yearSeq pour la prochaine fois
     
-      prename= paste0("monthly_",cellID)
+    lapply(monthSeq, function(month){
       
-      #cell Extent
-      cellExt <- getCellCentr(cellID)
-    
-      res_monthly <- getCMEMS_monthly(motu_cl = motu_cl_lib ,
-                                    log_cmems = log,
-                                    pwd_cmems = pass,
-                                    # Date 
-                                    yyyystart=year,
-                                    mmstart=month,
-                                    # Area 
-                                    xmin=as.character(cellExt[1,1]),
-                                    xmax=as.character(cellExt[1,1]),
-                                    ymin=as.character(cellExt[1,2]),
-                                    ymax=as.character(cellExt[1,2]),
-                                    zsmall="0.494", 
-                                    zbig="1",
-                                    #OutPath
-                                    out_path = outDir,
-                                    pre_name= prename)
-    
-  
-    
+      lapply(clist, function(cellID){
+        
+        prename= paste0("monthly_",cellID)
+        
+        #cell Extent
+        cellExt <- getCellCentr(cellID)
+        
+        res_monthly <- getCMEMS_monthly(motu_cl = motu_cl_lib ,
+                                        log_cmems = log,
+                                        pwd_cmems = pass,
+                                        # Date 
+                                        yyyystart=year,
+                                        mmstart=month,
+                                        # Area 
+                                        xmin=as.character(cellExt[1,1]),
+                                        xmax=as.character(cellExt[1,1]),
+                                        ymin=as.character(cellExt[1,2]),
+                                        ymax=as.character(cellExt[1,2]),
+                                        zsmall="0.494", 
+                                        zbig="1",
+                                        #OutPath
+                                        out_path = outDir,
+                                        pre_name= prename)
+        
+        
+        
+      })
     })
   })
- })
 }
 
-  
+
 TempData <- getCellTempData(clist, monthSeq, yearSeq)
 
+####################################################
 
-#Generating final form dataFrame
 
-temp <- data.frame(cellID = cellList, MAT = 0)
 
 # reading cell files and storing them
 
@@ -124,22 +124,48 @@ cellFileList <- dir("./data/rawdata/Environment/temp/CMEMS")
 
 #Function (to do) generating variable for one cell
 
-cellFileList <- cellFileList[grep(as.character(cellID),cellFileList)]
+getCellTempVar <- function(clist, cellFileList){
+  
+  
+  cellData <- lapply(clist, function(cellID, cf = cellFileList){
+  
+  
+  fname <- cf[grep(as.character(cellID),cf)]
+  
+  fname <- paste0("./data/rawdata/Environment/temp/CMEMS","/", fname)
+  
+  cellFiles <- lapply(fname, nc_open)
+  
+  celldata <- lapply(cellFiles, ncvar_get, varid = "thetao")
+  
+  
+  #annual mean
+  meanTemp <-  mean(unlist(celldata))
+  
+  #minimum
+  minTemp <- min(unlist(celldata))
+  minTemp <- lapply(celldata, mean)
+  
+  #Max
+  maxTemp <- max(unlist(celldata))
+  
+  #Annual Range
+  tempRange <- maxTemp - meanTemp
+  
+  
+  df <- data.frame(cell = cellID, MAT = meanTemp, MINT = minTemp, MAXT = maxTemp, TRAN = tempRange)
+  
+  # rownames(df) <- cellID
+  
+  df
+  
+  
+  }
+)
 
-cellFileList <- paste0("./data/rawdata/Environment/temp/CMEMS","/", cellFileList)
-
-cellFiles <- lapply(cellFileList, nc_open)
-
-cellFiles <- lapply(cellFiles, ncvar_get, varid = "thetao")
-
-#annual mean
-meanTemp <-  mean(unlist(cellFiles))
-
-#minimum
-minTemp <- min(unlist(cellFiles))
-
-#Max
-maxTemp <- max(unlist(cellFiles))
+  
+  
+}
 
 
 
