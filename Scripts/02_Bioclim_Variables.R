@@ -9,6 +9,7 @@ library(raster)
 library(rgdal)
 library(sp)
 library(ncdf4)
+library(ncdf.tools)
 library(tools)
 library(rgeos)
 
@@ -124,10 +125,25 @@ cellFileList <- dir("./data/rawdata/Environment/temp/CMEMS")
 
 #Function (to do) generating variable for one cell
 
+clist123 <- clist[1:3]
+clist456
+clist789
+clist101112
+clist131415
+clist161718
+clist192021
+clist222324
+clist252627
+clist282930
+clist313233
+
+# WARNING : This function might reach the limited number of files allowed to be opened at the same time 
+# as the ncdf4 package doesnt seem to close the opened files during a loop function
+
 getCellTempVar <- function(clist, cellFileList){
   
   
-  cellData <- lapply(clist, function(cellID, cf = cellFileList){
+  cellData <- lapply(clist1, function(cellID, cf = cellFileList){
   
   
   fname <- cf[grep(as.character(cellID),cf)]
@@ -144,7 +160,6 @@ getCellTempVar <- function(clist, cellFileList){
   
   #minimum
   minTemp <- min(unlist(celldata))
-  minTemp <- lapply(celldata, mean)
   
   #Max
   maxTemp <- max(unlist(celldata))
@@ -153,25 +168,27 @@ getCellTempVar <- function(clist, cellFileList){
   tempRange <- maxTemp - meanTemp
   
   
-  df <- data.frame(cell = cellID, MAT = meanTemp, MINT = minTemp, MAXT = maxTemp, TRAN = tempRange)
+  df <- data.frame(cellID = cellID, MAT = meanTemp, MINT = minTemp, MAXT = maxTemp, TRAN = tempRange)
   
   # rownames(df) <- cellID
   
-  df
+  # closeAllNcfiles()
   
+  df
   
   }
 )
 
   
   
+  data <- do.call("rbind", cellData)
+  
+  data
+  
 }
 
 
-
-
-
-
+tempVar <- getCellTempVar(clist = clist1, cellFileList)
 
 
 
