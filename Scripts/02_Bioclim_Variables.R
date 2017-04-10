@@ -12,6 +12,7 @@ library(ncdf4)
 library(ncdf.tools)
 library(tools)
 library(rgeos)
+library(abind)
 
 earthGrid <- raster("./data/interdata/earthGrid.tif")
 
@@ -117,74 +118,59 @@ TempData <- getCellTempData(clist, monthSeq, yearSeq)
 
 ####################################################
 
-
-
-# reading cell files and storing them
-
-cellFileList <- dir("./data/rawdata/Environment/temp/CMEMS")
-
-#Function generating variable for one cell
-
-# WARNING : This function might reach the limited number of files allowed to be opened at the same time 
-# as the ncdf4 package doesnt seem to close the opened files during a loop function
-
-getCellTempVar <- function(clist, cellFileList){
-  
-  
-  cellData <- lapply(clist, function(cellID, cf = cellFileList){
-  
-  
-  fname <- cf[grep(as.character(cellID),cf)]
-  
-  fname <- paste0("./data/rawdata/Environment/temp/CMEMS","/", fname)
-  
-  cellFiles <- lapply(fname, nc_open)
-  
-  celldata <- lapply(cellFiles, ncvar_get, varid = "thetao")
-  
-  
-  #annual mean
-  meanTemp <-  mean(unlist(celldata))
-  
-  #minimum
-  minTemp <- min(unlist(celldata))
-  
-  #Max
-  maxTemp <- max(unlist(celldata))
-  
-  #Annual Range
-  tempRange <- maxTemp - meanTemp
-  
-  
-  df <- data.frame(cellID = cellID, MAT = meanTemp, MINT = minTemp, MAXT = maxTemp, TRAN = tempRange)
-  
-  # rownames(df) <- cellID
-  
-  # nc_close(cellFiles)
-  
-  # closeAllNcfiles()
-  
-  df
-  
-  }
-)
-
-  
-  
-  data <- do.call("rbind", cellData)
-  
-  data
-  
-}
-
-
-# tempVar <- getCellTempVar(clist = clist1, cellFileList)
+# reading a nc files and storing them
 
 
 
+getNCData <- function(ncFile){
+  
+  cat("#file :",ncFile,"\n")
+  
+  file <- nc_open(paste0("./data/rawdata/Environment/temp/CMEMS","/",ncFile))
+  
+  dat <- ncvar_get(file, varid = "thetao")
+  
+  res <- c(min(dat),max(dat),mean(dat))
+  
+  names(res) <- c("min","max","mean")
+  
+  nc_close(file)
+  
+  res
+  
+}#eo getNCData
+
+# files <- list.files("./data/rawdata/Environment/temp/CMEMS")[1:12]
+
+# resCell <- sapply(files,getNCData)
 
 
 
+years <- as.character(2007:2016)
+months <- c("01","02","03","04","05","06","07","08","09","10","11","12")
+
+
+resCells <- lapply(cellList,function(cel){
+  
+  resYears <- lapply(years,function(y){
+    
+    sapply(months,function(m){
+      
+      fName <- paste0("monthly_",cel,"global-analysis-forecast-phy-001-024_thetao_",y,"-",m,".nc")
+      
+      getNCData(fName)
+      
+    })#eo lapply months
+    
+  })#eo lapply years
+  
+  resYears <- abind(resYears,along=3)
+  
+})#eo lapply cells
+
+names(resCells) <- cellList
+
+resCells[[1]][,,1]
 
 
 

@@ -426,6 +426,80 @@ tempData <- getCellTempData(cellList)
 
 
 
+# reading cell files and storing them
+
+cellFileList <- dir("./data/rawdata/Environment/temp/CMEMS")
+
+#Function generating variable for one cell
+
+# WARNING : This function might reach the limited number of files allowed to be opened at the same time 
+# as the ncdf4 package doesnt seem to close the opened files during a loop function
+
+getCellTempVar <- function(clist, cellFileList){
+  
+  
+  cellData <- lapply(clist, function(cellID, cf = cellFileList){
+    
+    
+    fname <- cf[grep(as.character(cellID),cf)]
+    
+    fname <- paste0("./data/rawdata/Environment/temp/CMEMS","/", fname)
+    
+    cellFiles <- lapply(fname, nc_open)
+    
+    celldata <- lapply(cellFiles, ncvar_get, varid = "thetao")
+    
+    
+    #annual mean
+    meanTemp <-  mean(unlist(celldata))
+    
+    #minimum
+    minTemp <- min(unlist(celldata))
+    
+    #Max
+    maxTemp <- max(unlist(celldata))
+    
+    #Annual Range
+    tempRange <- maxTemp - meanTemp
+    
+    
+    df <- data.frame(cellID = cellID, MAT = meanTemp, MINT = minTemp, MAXT = maxTemp, TRAN = tempRange)
+    
+    # rownames(df) <- cellID
+    
+    # nc_close(cellFiles)
+    
+    # closeAllNcfiles()
+    
+    df
+    
+  }
+  )
+  
+  
+  
+  data <- do.call("rbind", cellData)
+  
+  data
+  
+}
+
+
+# tempVar <- getCellTempVar(clist = clist1, cellFileList)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ############### Long Method that needs to be changed ####################
 clist1.4 <- clist[1:4]
 
