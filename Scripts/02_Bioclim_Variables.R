@@ -123,19 +123,7 @@ TempData <- getCellTempData(clist, monthSeq, yearSeq)
 
 cellFileList <- dir("./data/rawdata/Environment/temp/CMEMS")
 
-#Function (to do) generating variable for one cell
-
-clist123 <- clist[1:3]
-clist456
-clist789
-clist101112
-clist131415
-clist161718
-clist192021
-clist222324
-clist252627
-clist282930
-clist313233
+#Function generating variable for one cell
 
 # WARNING : This function might reach the limited number of files allowed to be opened at the same time 
 # as the ncdf4 package doesnt seem to close the opened files during a loop function
@@ -143,7 +131,7 @@ clist313233
 getCellTempVar <- function(clist, cellFileList){
   
   
-  cellData <- lapply(clist1, function(cellID, cf = cellFileList){
+  cellData <- lapply(clist, function(cellID, cf = cellFileList){
   
   
   fname <- cf[grep(as.character(cellID),cf)]
@@ -172,6 +160,8 @@ getCellTempVar <- function(clist, cellFileList){
   
   # rownames(df) <- cellID
   
+  # nc_close(cellFiles)
+  
   # closeAllNcfiles()
   
   df
@@ -188,13 +178,7 @@ getCellTempVar <- function(clist, cellFileList){
 }
 
 
-tempVar <- getCellTempVar(clist = clist1, cellFileList)
-
-
-
-
-
-
+# tempVar <- getCellTempVar(clist = clist1, cellFileList)
 
 
 

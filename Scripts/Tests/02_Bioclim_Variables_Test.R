@@ -426,6 +426,127 @@ tempData <- getCellTempData(cellList)
 
 
 
+############### Long Method that needs to be changed ####################
+clist1.4 <- clist[1:4]
+
+clist5.8 <- clist[5:8]
+
+clist9.12 <- clist[9:12]
+
+clist13.16 <- clist[13:16]
+
+clist17.20 <- clist[17:20]
+
+clist21.24 <- clist[21:24]
+
+clist25.28 <- clist[25:28]
+
+clist29.32 <- clist[29:32]
+
+clist33.36 <- clist[33:36]
+
+clist37.40 <- clist[37:40]
+
+clist41.44 <- clist[41:44]
+
+clist45.48 <- clist[45:48]
+
+clist49.52 <- clist[49:52]
+
+clist53.56 <- clist[53:56]
+
+clist57.60 <- clist[57:60]
+
+clist61.64 <- clist[61:64]
+
+clist65.68 <- clist[65:68]
+
+clist69.72 <- clist[69:72]
+
+clist73.76 <- clist[73:76]
+
+clist77.80 <- clist[77:80]
+
+clist81.84 <- clist[81:84]
+
+clist85.88 <- clist[85:88]
+
+clist89.92 <- clist[89:92]
+
+clist93.96 <- clist[93:96]
+
+clist97.100 <- clist[97:100]
+
+clist101.104 <- clist[101:104]
+
+clist105.108 <- clist[105:108]
+
+clist109.112 <- clist[109:112]
+
+clist113.116 <- clist[113:116]
+
+clist117.120 <- clist[117:120]
+
+clist121.124 <- clist[121:124]
+
+clist125.128 <- clist[125:128]
+
+clist129.132 <- clist[129:132]
+
+clist133.136 <- clist[133:136]
+
+clist137.140 <- clist[137:140]
+
+clist141.142 <- clist[141:142]
+
+
+
+tempVar4 <- getCellTempVar(clist = clist1.4, cellFileList)
+tempVar8 <- getCellTempVar(clist = clist5.8, cellFileList)
+tempVar12 <- getCellTempVar(clist = clist9.12, cellFileList)
+tempVar16 <- getCellTempVar(clist = clist13.16, cellFileList)
+tempVar20 <- getCellTempVar(clist = clist17.20, cellFileList)
+tempVar24 <- getCellTempVar(clist = clist21.24, cellFileList)
+tempVar28 <- getCellTempVar(clist = clist25.28, cellFileList)
+tempVar32 <- getCellTempVar(clist = clist29.32, cellFileList)
+tempVar36 <- getCellTempVar(clist = clist33.36, cellFileList)
+tempVar40 <- getCellTempVar(clist = clist37.40, cellFileList)
+tempVar44 <- getCellTempVar(clist = clist41.44, cellFileList)
+tempVar48 <- getCellTempVar(clist = clist45.48, cellFileList)
+tempVar52 <- getCellTempVar(clist = clist49.52, cellFileList)
+tempVar56 <- getCellTempVar(clist = clist53.56, cellFileList)
+tempVar60 <- getCellTempVar(clist = clist57.60, cellFileList)
+tempVar64 <- getCellTempVar(clist = clist61.64, cellFileList)
+tempVar68 <- getCellTempVar(clist = clist65.68, cellFileList)
+tempVar72 <- getCellTempVar(clist = clist69.72, cellFileList)
+tempVar76 <- getCellTempVar(clist = clist73.76, cellFileList)
+tempVar80 <- getCellTempVar(clist = clist77.80, cellFileList)
+tempVar84 <- getCellTempVar(clist = clist81.84, cellFileList)
+tempVar88 <- getCellTempVar(clist = clist85.88, cellFileList)
+tempVar92 <- getCellTempVar(clist = clist89.92, cellFileList)
+tempVar96 <- getCellTempVar(clist = clist93.96, cellFileList)
+tempVar100 <- getCellTempVar(clist = clist97.100, cellFileList)
+tempVar104 <- getCellTempVar(clist = clist101.104, cellFileList)
+tempVar108 <- getCellTempVar(clist = clist105.108, cellFileList)
+tempVar112 <- getCellTempVar(clist = clist109.112, cellFileList)
+tempVar116 <- getCellTempVar(clist = clist113.116, cellFileList)
+tempVar120 <- getCellTempVar(clist = clist117.120, cellFileList)
+tempVar124 <- getCellTempVar(clist = clist121.124, cellFileList)
+tempVar128 <- getCellTempVar(clist = clist125.128, cellFileList)
+tempVar132 <- getCellTempVar(clist = clist129.132, cellFileList)
+tempVar136 <- getCellTempVar(clist = clist133.136, cellFileList)
+tempVar140 <- getCellTempVar(clist = clist137.140, cellFileList)
+tempVar142 <- getCellTempVar(clist = clist141.142, cellFileList)
+
+
+tempVar <- rbind(tempVar4,tempVar8,tempVar12,tempVar16,tempVar20,tempVar24,tempVar28,
+                 tempVar32,tempVar36,tempVar40,tempVar44,tempVar48,tempVar52,tempVar56,
+                 tempVar60,tempVar64,tempVar68,tempVar72,tempVar76,tempVar80,tempVar84,
+                 tempVar88,tempVar92,tempVar96,tempVar100,tempVar104,tempVar108,tempVar112,
+                 tempVar116,tempVar120,tempVar124,tempVar128,tempVar132,tempVar136,tempVar140,tempVar142)
+
+
+############### eo Long Method that needs to be changed ####################
 
 
 
