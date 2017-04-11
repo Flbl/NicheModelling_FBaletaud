@@ -170,9 +170,28 @@ resCells <- lapply(cellList,function(cel){
 
 names(resCells) <- cellList
 
-resCells[[1]][,,1]
+#Min
+resCells[[1]][1,,]
+resCells[[1]][,1,]
+resCells[[1]][,,1:10]
+mean(resCells[[1]][1,,])
 
+# max
 
+mean(resCells[[1]][2,,])
 
+tempVar <- sapply(resCells, function(x){
+  
+   min = mean(x[1,,])
+  
+   max = mean(x[2,,])
+   
+   c(min,max)
+   # data.frame(min = min, max = max)
+   
+   
+})
 
-
+# class(as.data.frame(tempVar))
+# 
+# df <- as.data.frame(tempVar)
