@@ -35,7 +35,7 @@ getCellList <- function(cleandoccs){
 }
 
 cellList <- getCellList(cleandOccs)
-
+# cellListAbs <- getCellList((cleandOccs))
 
 
 #2. create a function returning cell centroid from cell number. (we know that those cells have occurrences)
@@ -53,10 +53,10 @@ getCellCentr <- function(cellID, raster = earthGrid){
 
 
 clist <- as.list(cellList)
-monthSeq <- append(paste0(0,seq(1:9)), as.character(10:12))
-monthSeq <- as.list(monthSeq)
+monthSeq <- as.list(append(paste0(0,seq(1:9)), as.character(10:12)))
 yearSeq <- as.list(as.character(seq(0:9)+2000+6))
 
+# clistAbs <- as.list(cellListAbs)
 
 
 
@@ -76,13 +76,13 @@ source("./Scripts/getCMEMS/cred.txt")
 
 getCellTempData <- function(clist, monthSeq, yearSeq){
   
-  outDir <- paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/")
+  outDir <- paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/abs")
   
-  lapply(yearSeq, function(year){ # Inverser clist et yearSeq pour la prochaine fois
+  lapply(clist, function(year){ # Inverser clist et yearSeq pour la prochaine fois
     
-    lapply(monthSeq, function(month){
+    lapply(yearSeq, function(month){
       
-      lapply(clist, function(cellID){
+      lapply(monthSeq, function(cellID){
         
         prename= paste0("monthly_",cellID)
         
@@ -114,7 +114,7 @@ getCellTempData <- function(clist, monthSeq, yearSeq){
 }
 
 
-TempData <- getCellTempData(clist, monthSeq, yearSeq)
+TempDataAbs <- getCellTempData(clistAbs, monthSeq, yearSeq)
 
 ####################################################
 
@@ -186,12 +186,19 @@ tempVar <- sapply(resCells, function(x){
   
    max = mean(x[2,,])
    
-   c(min,max)
+   mean = mean(x[3,,])
+   
+   c(min,max,mean)
    # data.frame(min = min, max = max)
    
    
 })
 
-# class(as.data.frame(tempVar))
-# 
-# df <- as.data.frame(tempVar)
+
+
+tempVar <- as.data.frame(t(tempVar))
+colnames(tempVar) <- c("min","max","mean")
+tempVar$CellNumber <- rownames(tempVar)
+tempVar$range <- tempVar$max - tempVar$min
+tempVar <- tempVar[,c(4,1,2,3,5)]
+head(tempVar)

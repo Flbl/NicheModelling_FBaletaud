@@ -297,7 +297,7 @@ generateAbs <- function(Occs){
   
   colnames(pseudoAbs) <- c("decimalLongitude","decimalLatitude")
   
-  pseudoAbs$CellNumber <- pseudoAbsCells
+  pseudoAbs$cellNumber <- pseudoAbsCells
   
   pseudoAbs$species <- Occs$species[1]
   
