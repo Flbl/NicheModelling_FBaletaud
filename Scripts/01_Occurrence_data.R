@@ -297,9 +297,11 @@ generateAbs <- function(Occs){
   
   colnames(pseudoAbs) <- c("decimalLongitude","decimalLatitude")
   
-  pseudoAbs$cellNumber <- pseudoAbsCells
+  pseudoAbs$cellNumber <- pseudoAbsCells # Need to be corrected : lapply(pseudoAbs, cellFromXY(earthGrid, ) ... PseudoAbsCells arent the good ones
   
   pseudoAbs$species <- Occs$species[1]
+  
+  pseudoAbs$occurrence <- 0
   
   pseudoAbs
   
@@ -339,11 +341,32 @@ names(cleandOccs) <- species
 
 
 
+writecleandOccs <- function(cleandOccs) {
+  
+  lapply(cleandOccs, function(tabs){
+    
+    occs <- tabs$occs[,c("species","occurrence", "decimalLatitude","decimalLongitude", "cellNumber")]
+    
+    abs <- tabs$abs[,c("species", "decimalLatitude","decimalLongitude", "CellNumber")] # Add cellnumber for final version
+    
+    abs$occurrence <- 0 # Remove for final version
+    
+    colnames(abs)[which(names(abs) == "CellNumber")] <- "cellNumber" # To remove for final version since it should be fixed up
+    
+    occsabs <- rbind(occs, abs)
+    
+    write.csv(occsabs, file = paste0("./data/calibdata/",occs$species[1],"_dataset"), row.names = FALSE)
+    
+    return(paste0("dataset written in"," ","./data/calibdata/",occs$species[1],"_dataset"))
+  })
+  
+  
+}
+
+writecleandOccs(cleandOccs)
 
 
-
-
-
+# test <- read.csv("./data/calibdata/Triaenodon_obesus_dataset")
 
 
 

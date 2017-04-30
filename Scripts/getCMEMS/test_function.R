@@ -62,7 +62,7 @@ library(ncdf4)
 
 
 #getCMEMS
-fev <- nc_open("./data/rawdata/Environment/temp/CMEMS/monthly_3201152global-analysis-forecast-phy-001-024_thetao_2007-02.nc")
+fev <- nc_open("./data/rawdata/Environment/temp/CMEMS/monthly_3048157global-analysis-forecast-phy-001-024_thetao_2013-02.nc")
 fev2 <- nc_open("./data/rawdata/Environment/temp/CMEMS/monthly_3201152global-analysis-forecast-phy-001-024_thetao_2016-02.nc")
 
 # Read longitude & latitude

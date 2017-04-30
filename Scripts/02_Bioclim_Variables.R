@@ -23,11 +23,11 @@ eezNcGrid <- raster("./data/interdata/eezNcGrid.tif")
 # Code to get the temperature of cleandOccss cells only from copernicus #
 #########################################################################
 
-#1. Getting a list of unique cells
+#1. Getting a list of unique cells 
 
 getCellList <- function(cleandoccs){
   
-  cellAll <-    unlist(lapply(cleandOccs,function(x){c(x$occs$cellNumber, x$abs$cellNumber)}))
+  cellAll <-    unlist(lapply(cleandoccs,function(x){c(x$occs$cellNumber, x$abs$cellNumber)}))
   cellList <- unique(cellAll)
   
   return(cellList)
@@ -35,7 +35,29 @@ getCellList <- function(cleandoccs){
 }
 
 cellList <- getCellList(cleandOccs)
-# cellListAbs <- getCellList((cleandOccs))
+
+
+#### fixing for absences #########
+
+# For the later use of the make file. The absence part needs to be fused with presence to make the script deal with both at the same time
+
+cellListAbs1 <- unlist(lapply(cleandOccs,function(x){x$abs$CellNumber}))
+cellListAbs1 <- unique(cellListAbs1)
+
+x = unlist(lapply(cleandOccs,function(x){x$abs$decimalLongitude}))
+y = unlist(lapply(cleandOccs,function(x){x$abs$decimalLatitude}))
+df = data.frame(lon = x, lat = y)
+df = unique(df[,c("lon","lat")])
+dfmat <- split(as.matrix(df), seq(nrow(df)))
+cellNumb <- sapply(dfmat, cellFromXY, object = earthGrid)
+# test <- t(as.data.frame(sapply(cellNumb, getCellCentr)))
+test <- t(sapply(cellNumb, getCellCentr))
+testspt = SpatialPointsDataFrame(coords = test, data = as.data.frame(cellNumb), proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+# writeOGR(testspt, dsn = "./data", layer = "testspt", driver = "ESRI Shapefile")
+#########################
+######## fixing absence data ########
+
+cellListAbs <- cellNumb
 
 
 #2. create a function returning cell centroid from cell number. (we know that those cells have occurrences)
@@ -56,7 +78,7 @@ clist <- as.list(cellList)
 monthSeq <- as.list(append(paste0(0,seq(1:9)), as.character(10:12)))
 yearSeq <- as.list(as.character(seq(0:9)+2000+6))
 
-# clistAbs <- as.list(cellListAbs)
+clistAbs <- as.list(cellListAbs)
 
 
 
@@ -76,15 +98,15 @@ source("./Scripts/getCMEMS/cred.txt")
 
 getCellTempData <- function(clist, monthSeq, yearSeq){
   
-  outDir <- paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMS/abs")
+  outDir <- paste0("/home/florian/NicheModelling_FBaletaud/data/rawdata/Environment/temp/CMEMSabs/")
   
-  lapply(clist, function(year){ # Inverser clist et yearSeq pour la prochaine fois
+  lapply(clist, function(cellID){ # Inverser clist et yearSeq pour la prochaine fois
     
-    lapply(yearSeq, function(month){
+    lapply(yearSeq, function(year){
       
-      lapply(monthSeq, function(cellID){
+      lapply(monthSeq, function(month){
         
-        prename= paste0("monthly_",cellID)
+        prename = paste0("monthly_",cellID)
         
         #cell Extent
         cellExt <- getCellCentr(cellID)
@@ -114,7 +136,103 @@ getCellTempData <- function(clist, monthSeq, yearSeq){
 }
 
 
+TempData <- getCellTempData(clist, monthSeq, yearSeq)
 TempDataAbs <- getCellTempData(clistAbs, monthSeq, yearSeq)
+
+
+
+#### Downloading missing data ####
+
+fullCellFileListAbs <- as.vector(sapply(cellListAbs,function(cel){
+  
+  sapply(years,function(y){
+    
+    sapply(months,function(m){
+      
+      fName <- paste0("monthly_",cel,"global-analysis-forecast-phy-001-024_thetao_",y,"-",m,".nc")
+      
+    })
+  })
+}))
+
+fullCellFileListAbs  
+
+dlMissedTempData <- function(ncFile){
+  
+  out <- tryCatch({
+    
+    cat("#file :",ncFile,"\n")
+    
+    file <- nc_open(paste0("./data/rawdata/Environment/temp/CMEMS","/",ncFile))
+    
+    cat("Closing file")
+    nc_close(file)
+    
+  }
+  
+  ,error = function(cond) {
+    
+    
+    message("downloading data")
+    
+    param <- gsub("monthly_","", x = ncFile)
+    param <- gsub("global-analysis-forecast-phy-001-024_thetao","",x = param)
+    param <- gsub(".nc","", x = param)
+    param <- unlist(strsplit(param, "[_-]+"))
+    
+    paramCell <- as.numeric(param[1])
+    paramYear = param[2]
+    paramMonth <- param[3]
+    
+    
+    
+    prename = paste0("monthly_",paramCell)
+    
+    #cell Extent
+    cellExt <- getCellCentr(paramCell)
+    
+    res_monthly <- getCMEMS_monthly(motu_cl = motu_cl_lib ,
+                                    log_cmems = log,
+                                    pwd_cmems = pass,
+                                    # Date 
+                                    yyyystart=paramYear,
+                                    mmstart=paramMonth,
+                                    # Area 
+                                    xmin=as.character(cellExt[1,1]),
+                                    xmax=as.character(cellExt[1,1]),
+                                    ymin=as.character(cellExt[1,2]),
+                                    ymax=as.character(cellExt[1,2]),
+                                    zsmall="0.494", 
+                                    zbig="1",
+                                    #OutPath
+                                    out_path = outDir,
+                                    pre_name= prename)
+    
+  }
+  
+  )
+  
+  return(out)
+  
+}
+
+
+
+
+TempDataMissed <- lapply(fullCellFileListAbs,dlMissedTempData)
+
+
+cellListAll <- append(cellList, cellListAbs)
+
+
+
+
+
+
+
+
+
+
 
 ####################################################
 
@@ -150,25 +268,56 @@ years <- as.character(2007:2016)
 months <- c("01","02","03","04","05","06","07","08","09","10","11","12")
 
 
-resCells <- lapply(cellList,function(cel){
-  
+resCells <- lapply(cellListAll,function(cel){
+
   resYears <- lapply(years,function(y){
-    
+
     sapply(months,function(m){
-      
+
       fName <- paste0("monthly_",cel,"global-analysis-forecast-phy-001-024_thetao_",y,"-",m,".nc")
-      
+
       getNCData(fName)
-      
+
     })#eo lapply months
-    
+
   })#eo lapply years
-  
+
   resYears <- abind(resYears,along=3)
-  
+
 })#eo lapply cells
 
-names(resCells) <- cellList
+names(resCells) <- cellListAll
+
+
+
+
+
+# 
+# resCellsAbs <- lapply(cellListAbs,function(cel){
+# 
+#   resYears <- lapply(years,function(y){
+# 
+#     sapply(months,function(m){
+# 
+#       fName <- paste0("monthly_",cel,"global-analysis-forecast-phy-001-024_thetao_",y,"-",m,".nc")
+# 
+#       getNCData(fName)
+# 
+#     })#eo lapply months
+# 
+#   })#eo lapply years
+# 
+#   resYears <- abind(resYears,along=3)
+# 
+# })#eo lapply cells
+# 
+# names(resCellsAbs) <- cellListAbs
+
+# resCellsAbs[[1]][1,,]
+
+
+
+
 
 #Min
 resCells[[1]][1,,]
@@ -197,8 +346,11 @@ tempVar <- sapply(resCells, function(x){
 
 
 tempVar <- as.data.frame(t(tempVar))
-colnames(tempVar) <- c("min","max","mean")
+colnames(tempVar) <- c("Tmin","Tmax","Tmean")
 tempVar$CellNumber <- rownames(tempVar)
-tempVar$range <- tempVar$max - tempVar$min
+tempVar$Trange <- tempVar$Tmax - tempVar$Tmin
 tempVar <- tempVar[,c(4,1,2,3,5)]
 head(tempVar)
+dim(tempVar)
+
+write.csv(tempVar, "./data/calibdata/cellTemperatures")
