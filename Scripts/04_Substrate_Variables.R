@@ -226,7 +226,7 @@ writeVarToRast <- function(s, map = eezNcGrid){
     
     rast <- rasterize(substrateSpatial ,field = x, featRast)
     
-    writeRaster(rast, filename = paste0("./data/calibdata/", x, ".tif"), overwrite = TRUE)
+    writeRaster(rast, filename = paste0("./data/predictdata/", x, ".tif"), overwrite = TRUE)
     
     
     
@@ -242,11 +242,211 @@ writeVarToRast(substrate)
 # plot(raster("./data/calibdata/Seamounts.tif"))
 
 
+# @knitr ExctractCalibData
+
+
+
+############ Extracting calib data ################## 
+
+rawSubs <- substrate
+rawSubs$cellNumber <- rownames(rawSubs)
+head(rawSubs)
+
+
+NCRecords <- read.table("./data/rawdata/Biodiversity/dataset_fitted.csv", sep = ";", dec = ",", header = TRUE) 
+
+species <- names(cleandOccs)
+
+spDatasets <- lapply(species, function(my_sp, rec = NCRecords){
+
+  
+  matchSp = paste(substring(my_sp, 1,1), "_" ,unlist(strsplit(my_sp, "_"))[2], sep = "", collapse = "")
+  matchCol = grep(matchSp,names(rec))
+  names(rec)[matchCol] <- my_sp
+  
+  NC_occs <- rec[,c(3,2, matchCol)]
+  NC_occs <- NC_occs[NC_occs[,3] >= "1",]
+  colnames(NC_occs) <- c("decimalLongitude","decimalLatitude","individualCount")
+  NC_occs$occurrence = 1
+  NC_occs$individualCount <- NULL
+  rownames(NC_occs) <- NULL # Reassign the rownames of NC_occs
+  
+  NC_occs$species <- my_sp
+  
+  NC_occs <- NC_occs[,c(4,1,2,3)]
+  
+  NC_occs$cellNumber <- cellFromXY(eezNcGrid, as.matrix(NC_occs[,c(2,3)]))
+  
+  ## Checking for points on earth
+  ## creating spatial points for our occurrences
+  
+  occsSpatial = SpatialPointsDataFrame(
+    coords = as.matrix(NC_occs[,c(2,3)]),
+    data = NC_occs,
+    proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+  )
+  
+  NC_occs <- NC_occs[-which(is.na(raster::extract(eezNcGrid,occsSpatial))),]
+  
+  
+  NC_occs
+  
+})
+
+names(spDatasets) <- species
+
+# spDatasets
+
+## Generating absences
+
+generateAbs <- function(Occs){
+  
+  # Creating pseudo absences using IUCN range map outer limits
+  print("Getting IUCN range map data")
+  
+  ## Generate auto paths to species shapefile
+  my_sp <- as.character(Occs$species[1])
+  
+  pathSp <- paste("./data/rawdata/Biodiversity/iucn/", my_sp, sep = "", collapse = "")
+  
+  layerSp <- sub(".shp", "", list.files(path = pathSp, full.names = FALSE, pattern = ".shp")[1])
+  
+  
+  ## Reading the shapefile of the species
+  cat("Reading the IUCN shapefile\n")
+  
+  iucn <- readOGR(dsn = pathSp, layer = layerSp)
+  
+  ## Cropping to NC
+  
+  iucn <- crop(iucn, extent(eezNcPoly))
+  
+  ## Converting to raster
+  cat("Converting shapefile to raster\n")
+  
+  rasIucnOccs <- raster(extent(iucn))
+  
+  res(rasIucnOccs) <- res(eezNcGrid)
+  
+  projection(rasIucnOccs) <- proj4string(eezNcGrid)
+  
+  origin(rasIucnOccs) <- origin(eezNcGrid)
+  
+  rasIucnOccs <- rasterize(iucn, field = "PRESENCE", rasIucnOccs) # assigning 1 for cells within the range
+  
+  rasIucnOccs <- reclassify(rasIucnOccs, cbind(1,2))
+  
+  
+  cat("Merging eezNcGrid and IUCN rangemap raster\n")
+  
+  rasIucnOccs <- mask(rasIucnOccs, eezNcPoly)
+  
+  rasIucnOccs <- crop(rasIucnOccs, extent(eezNcPoly))
+  
+  antiAbs <- merge(rasIucnOccs,eezNcGrid)
+  
+  antiAbs <- reclassify(antiAbs, cbind(NA,2))
+  
+  antiAbs <- mask(antiAbs, eezNcPoly)
+  
+  antiAbs <- crop(antiAbs, extent(eezNcPoly))
+  
+  
+  
+  
+  # Sampling the cells with the length of OccCells in the cells exterior to IUCN range and earthGrid
+  
+  OccsCells <- unique(Occs$cellNumber)
+  
+  cat("Sampling cells outside species range and earth\n")
+  
+  sampleClasses <- function(r, n)  {
+    
+    cellVal <- which(t(as.matrix(r)) == 1) # get All cells for class 2 (=Abs)
+    
+    samples <- sample(cellVal, n) # sample class's cell number
+    
+    return(samples)
+  }
+  
+  
+  pseudoAbsCells <- sampleClasses(antiAbs, length(OccsCells)) # multiply length(OccsCells) if we want another ratio than 50% of prevalence
+  
+  pseudoAbs <- as.data.frame(xyFromCell(antiAbs, pseudoAbsCells))
+  
+  colnames(pseudoAbs) <- c("decimalLongitude","decimalLatitude")
+  
+  pseudoAbs$cellNumber <- cellFromXY(eezNcGrid, as.matrix(pseudoAbs)) # Need to be corrected : lapply(pseudoAbs, cellFromXY(earthGrid, ) ... PseudoAbsCells arent the good ones
+  
+  pseudoAbs$species <- Occs$species[1]
+  
+  pseudoAbs$occurrence <- 0
+  
+  pseudoAbs <- pseudoAbs[,c(4,1,2,5,3)]
+  
+  pseudoAbs
+  
+  dataSet <- rbind(Occs, pseudoAbs) 
+  
+  cat("Done. Pseudo absences added to current dataset\n")
+  
+  dataSet
+  
+} # eo generateAbs
+
+
+spDatasets <- lapply(spDatasets, generateAbs)
+
+
+## binding substrate data
+
+
+subsdata <- lapply(spDatasets, function(tabs, subst = rawSubs){
+  
+  subst <- subst[match(tabs$cellNumber, subst$cellNumber, nomatch=0),]
+  
+  tabs <- cbind(tabs, subst[ , -which(names(subst) %in% c("cellNumber"))])
+  
+}
+)
+
+testspt <- SpatialPoints(coords = as.matrix(spDatasets[[1]][,c(2,3)]), proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") )
 
 
 
 
+## Generating calib data for Travel_Dist
 
 
+travelDist <- raster("./data/predictdata/Travel_Dist.tif")
 
+travelDist <- as.data.frame(travelDist)
+# travelDist <- cbind(coordinates(eezNcGrid), travelDist)
+travelDist$cellNumber <- rownames(travelDist)
+
+
+subsTravelData <- lapply(subsdata, function(tabs, trav = travelDist){
+  
+  trav <- trav[match(tabs$cellNumber, trav$cellNumber, nomatch=0),]
+  
+  trav$cellNumber = NULL
+  
+  tabs <- cbind(tabs, trav)
+  
+}
+)
+
+
+dir.create("./data/calibdata/regionmodel")
+
+lapply(subsTravelData, function(tabs){
+  
+  write.csv(tabs, file = paste0("./data/calibdata/regionmodel/",tabs$species[1],"_speciesDataset_region.csv"), row.names = FALSE)
+  
+  return(paste0("dataset written in"," ","./data/regionmodel/bioclimodel/",tabs$species[1],"_speciesDataset_region.csv"))
+  
+})
+
+test <- read.csv("./data/calibdata/regionmodel/Triaenodon_obesus_speciesDataset_region.csv")
+# plot(travelDist)
 

@@ -51,6 +51,11 @@ costNoumeaLatLong <- projectRaster(from = costNoumea, to = eezNcGrid,
 
 # plot(costNoumeaLatLong)
 
-writeRaster(costNoumeaLatLong, filename = "./data/calibdata/Travel_Dist.tif", overwrite = TRUE)
+writeRaster(costNoumeaLatLong, filename = "./data/predictdata/Travel_Dist.tif", overwrite = TRUE)
+
+
+
+
+
 
 

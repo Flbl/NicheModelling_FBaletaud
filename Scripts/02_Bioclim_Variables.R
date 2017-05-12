@@ -347,10 +347,31 @@ tempVar <- sapply(resCells, function(x){
 
 tempVar <- as.data.frame(t(tempVar))
 colnames(tempVar) <- c("Tmin","Tmax","Tmean")
-tempVar$CellNumber <- rownames(tempVar)
+tempVar$cellNumber <- rownames(tempVar)
 tempVar$Trange <- tempVar$Tmax - tempVar$Tmin
 tempVar <- tempVar[,c(4,1,2,3,5)]
 head(tempVar)
 dim(tempVar)
 
-write.csv(tempVar, "./data/calibdata/cellTemperatures")
+write.csv(tempVar, "./data/calibdata/cellTemperatures.csv", row.names = FALSE)
+
+
+
+
+
+
+
+######### Generating the predict data ###############
+
+
+part20132016 <- nc_open("./data/rawdata/Environment/temp/predict_ZEE_NC/global-analysis-forecast-phy-001-024_1494607691521.nc")
+part20072012 <- nc_open("./data/rawdata/Environment/temp/predict_ZEE_NC/global-analysis-forecast-phy-001-024_1494608068546.nc")
+
+lon <- ncvar_get(part20132016, "longitude")
+lat <- ncvar_get(part20132016, "latitude")
+
+
+temp1316 <- ncvar_get(part20132016, "thetao") 
+temp0712 <- ncvar_get(part20072012, "thetao") 
+temp <- abind(temp0712,temp1316)
+

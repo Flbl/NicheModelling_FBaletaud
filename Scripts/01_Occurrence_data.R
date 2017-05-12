@@ -355,9 +355,11 @@ writecleandOccs <- function(cleandOccs) {
     
     occsabs <- rbind(occs, abs)
     
-    write.csv(occsabs, file = paste0("./data/calibdata/",occs$species[1],"_dataset"), row.names = FALSE)
+    dir.create("./data/calibdata/bioclimodel")
     
-    return(paste0("dataset written in"," ","./data/calibdata/",occs$species[1],"_dataset"))
+    write.csv(occsabs, file = paste0("./data/calibdata/bioclimodel/",occs$species[1],"_speciesDataset.csv"), row.names = FALSE)
+    
+    return(paste0("dataset written in"," ","./data/calibdata/bioclimodel/",occs$species[1],"_speciesDataset.csv"))
   })
   
   

@@ -1,6 +1,6 @@
 #################################################################
 ##                                                             ##
-##         Modelling the first bioclimatic enveloppe           ##         
+##         Modelling the second regional enveloppe             ##         
 ##                                                             ##
 #################################################################
 
@@ -10,55 +10,46 @@ library(h2oEnsemble)
 
 ## Reading datasets and binding with temperature cell data
 
-spDatasets <- dir("./data/calibdata/bioclimodel", "*_speciesDataset.csv", full.names = TRUE)
+spDatasets <- dir("./data/calibdata/regionmodel", "*_speciesDataset_region.csv", full.names = TRUE)
 
 spDatasets <- lapply(spDatasets, read.csv)
 
 names(spDatasets) <- c("Carcharhinus_amblyrhynchos","Carcharhinus_melanopterus","Triaenodon_obesus")
 
-cellTemp <- read.csv("./data/calibdata/bioclimodel/cellTemperatures.csv")
-cellTemp <- cellTemp[,-1] # to be removed with the adding row.names = FALSE added in write.csv from occurrence_data.R
-colnames(cellTemp)[1] <- "cellNumber" # To be removed after fixing scripts
+dat <- lapply(spDatasets, function(tabs) {
+  
+  df <- tabs
 
-
-dat <- lapply(spDatasets, function(tabs, preds = cellTemp) {
-  
-  tabs <- tabs[!duplicated(tabs$cellNumber), ]
-  
-  tabs$cellNumber <- cellFromXY(as.matrix(tabs[,c("decimalLongitude","decimalLatitude")]), object = earthGrid) # To remove with the fix between earthgrid cells and merged earthGrid/antiabs cells from occurrence_data.R
-  
-  preds <- preds[match(tabs$cellNumber, preds$cellNumber, nomatch=0),]
-  
-  df <- cbind(tabs, preds)
-  
-  df <- df[,c("occurrence","Tmin","Tmax","Tmean","Trange")]
-  
   df$occurrence[df$occurrence == 1] <- "Presence"
-  
+
   df$occurrence[df$occurrence == 0] <- "Absence"
-  
-  df <- df[sample(nrow(df), nrow(df)), ]
-  
+
   df$occurrence <- factor(df$occurrence)
   
-  df
+  drops <- c("species","decimalLongitude","decimalLatitude","cellNumber")
   
-  write.csv(df, file = paste0("./data/calibdata/bioclimodel/",tabs$species[1],"_calib.csv"), row.names = FALSE)
+  df <- df[, !(names(df) %in% drops)]
   
-  cat(paste0("dataset written in"," ","./data/calibdata/bioclimodel/",tabs$species[1],"_calib.csv","\n"))
+  df <- df[sample(nrow(df), nrow(df)), ]
+
+  write.csv(df, file = paste0("./data/calibdata/regionmodel/",tabs$species[1],"_region_calib.csv"), row.names = FALSE)
+  
+  cat(paste0("dataset written in"," ","./data/calibdata/regionmodel/",df$species[1],"_region_calib.csv","\n"))
   
   return(df)
   
 })
 
-library(h2o)
-library(h2oEnsemble)
+
+## Launching h2o
+
+
 h2o.init()
 
 
 # Carcharhinus amblyrhynchos
-datAmbly <- h2o.importFile("data/calibdata/bioclimodel/Carcharhinus_amblyrhynchos_calib.csv", destination_frame = "CamblyData", parse = TRUE, header = TRUE,
-                      sep = ",", col.names = NULL, col.types = c("factor","numeric","numeric","numeric","numeric"), na.strings = NULL)
+datAmbly <- h2o.importFile("data/calibdata/regionmodel/Carcharhinus_amblyrhynchos_region_calib.csv", destination_frame = "CamblyData", parse = TRUE, header = TRUE,
+                           sep = ",", col.names = NULL, col.types = c("factor","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric"), na.strings = NULL)
 
 
 
@@ -92,11 +83,11 @@ metalearner <- "h2o.glm.wrapper"
 
 
 ESAmbly <- h2o.ensemble(x = names(train[-1]), y = "occurrence", 
-                                        training_frame = train,
-                                        family = "binomial",
-                                        learner = learner,
-                                        metalearner = metalearner,
-                                        cvControl = list(V = 5))
+                        training_frame = train,
+                        family = "binomial",
+                        learner = learner,
+                        metalearner = metalearner,
+                        cvControl = list(V = 5))
 
 
 
@@ -116,21 +107,25 @@ print(perfAmbly, metric = "MSE")
 
 
 
-# Carcharhinus melanopterus
 
-datMelano <- h2o.importFile("data/calibdata/bioclimodel/Carcharhinus_melanopterus_calib.csv", destination_frame = "CmelanoData", parse = TRUE, header = TRUE,
-                      sep = ",", col.names = NULL, col.types = c("factor","numeric","numeric","numeric","numeric"), na.strings = NULL)
+
+
+
+# Carcharhinus melanopterus # DATA SET TOO SMALL
+
+datMelano <- h2o.importFile("data/calibdata/regionmodel/Carcharhinus_melanopterus_region_calib.csv", destination_frame = "CmelanoData", parse = TRUE, header = TRUE,
+                            sep = ",", col.names = NULL, col.types = c("factor","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric"), na.strings = NULL)
 
 # Creating the 3 splits
 
 splits <- h2o.splitFrame(
   datMelano,           ##  splitting the H2O frame we read above
-  c(0.7,0.15),   ##  create splits of 70% and 15%; 
+  c(0.9,0.05),   ##  create splits of 70% and 15%;
   ##  H2O will create one more split of 1-(sum of these parameters)
   ##  so we will get 0.7 / 0.15 / 1 - (0.7+0.15) = 0.7/0.15/0.15
   seed=1234)    ##  setting a seed will ensure reproducible results (not R's seed)
 
-train <- h2o.assign(splits[[1]], "train.hex")   
+train <- h2o.assign(splits[[1]], "train.hex")
 ## assign the first result the R variable train
 ## and the H2O name train.hex
 valid <- h2o.assign(splits[[2]], "valid.hex")   ## R valid, H2O valid.hex
@@ -145,12 +140,12 @@ train[1:5,]   ## rows 1-5, all columns
 ######### Ensemble Forecasting ###########
 
 
-ESMelano <- h2o.ensemble(x = names(train[-1]), y = "occurrence", 
-                    training_frame = train,
-                    family = "binomial",
-                    learner = learner,
-                    metalearner = metalearner,
-                    cvControl = list(V = 5))
+ESMelano <- h2o.ensemble(x = names(train[-1]), y = "occurrence",
+                         training_frame = train,
+                         family = "binomial",
+                         learner = learner,
+                         metalearner = metalearner,
+                         cvControl = list(V = 5))
 
 
 
@@ -165,12 +160,10 @@ perfMelano
 print(perfMelano, metric = "MSE")
 
 
-
-
 # Triaenodon obesus
 
-datObesus <- h2o.importFile("data/calibdata/bioclimodel/Triaenodon_obesus_calib.csv", destination_frame = "TobesusData", parse = TRUE, header = TRUE,
-                            sep = ",", col.names = NULL, col.types = c("factor","numeric","numeric","numeric","numeric"), na.strings = NULL)
+datObesus <- h2o.importFile("data/calibdata/regionmodel/Triaenodon_obesus_region_calib.csv", destination_frame = "TobesusData", parse = TRUE, header = TRUE,
+                            sep = ",", col.names = NULL, col.types = c("factor","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric"), na.strings = NULL)
 
 # Creating the 3 splits
 
@@ -214,3 +207,42 @@ h2o.save_ensemble(ESObesus , path = "data/results/h2o_models/TObesus" , export_l
 perfObesus <- h2o.ensemble_performance(ESObesus, newdata = test)
 perfObesus
 print(perfObesus, metric = "MSE")
+
+
+##### PREDICTING DATA #####
+
+
+predictData <- stack(list.files("./data/predictdata", full.names = TRUE))
+predData.R <- as.data.frame(predictData)
+predData.R <- na.omit(predData.R)
+write.csv(predData.R, "./data/predictdata/predDataRegion.csv", row.names = FALSE)
+predDatah2o <- h2o.importFile("./data/predictdata/predDataRegion.csv", destination_frame = "predDataRegion", parse = TRUE, header = TRUE,
+                                sep = ",", col.names = NULL, col.types = c("numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric"), na.strings = NULL)
+
+amblyPreds <- predict(ESAmbly, predDatah2o)
+
+
+
+predData.R <- as.data.frame(predictData)
+predData.R <- cbind(as.data.frame(coordinates(predictData)), predData.R)
+predDataCoords <- na.omit(predData.R)
+predDataCoords <- as.matrix(predDataCoords[,c(1:2)])
+
+predictions <- as.data.frame(amblyPreds$pred)
+
+amblyMapPoints <- SpatialPointsDataFrame(
+  coords = predDataCoords,
+  data = predictions,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+
+
+amblyMapGrid <- amblyMapPoints
+gridded(amblyMapGrid) = TRUE
+amblyMapGrid <- as(amblyMapGrid, "SpatialGridDataFrame")
+amblyMap <- raster(amblyMapGrid, values = TRUE)
+amblyMap <- rasterize(amblyMapPoints, amblyMap, field = "Presence")
+
+
+plot(amblyMap)
+
