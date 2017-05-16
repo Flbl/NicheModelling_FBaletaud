@@ -206,6 +206,8 @@ substrate <- na.omit(substrate)
 
 # @knitr WriteToRast
 
+# Changer output directory de writeVarToRast dans sous dossier pour différencier BEM de HAB (Et donc dans autres scripts utilisant le path)
+
 writeVarToRast <- function(s, map = eezNcGrid){
   
   sNoCoords <-  subset(s, select = -c(x,y))
@@ -447,6 +449,6 @@ lapply(subsTravelData, function(tabs){
   
 })
 
-test <- read.csv("./data/calibdata/regionmodel/Triaenodon_obesus_speciesDataset_region.csv")
+# test <- read.csv("./data/calibdata/regionmodel/Triaenodon_obesus_speciesDataset_region.csv")
 # plot(travelDist)
 
