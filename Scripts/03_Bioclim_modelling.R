@@ -238,6 +238,9 @@ print(perfObesus, metric = "MSE")
 
 ############ Predicting DATA #############
 
+FitAmblyh2oEnsemble <- h2o.load_ensemble("./data/results/h2o_models/bioclimodel/Camblyrhynchos")
+
+
 
 # Amblyrhynchos
 predictData <- stack(list.files("./data/predictdata/BEM", pattern = ".tif", full.names = TRUE))
@@ -272,12 +275,14 @@ amblyMap <- rasterize(amblyMapPoints, amblyMap, field = "Presence")
 
 
 plot(amblyMap)
-
+writeRaster(amblyMap, filename = paste0("./data/predictdata/Filtered/BEM_ambly.tif"), overwrite = TRUE)
 
 
 
 
 # Melanopterus
+
+FitMelanoh2oEnsemble <- h2o.load_ensemble("./data/results/h2o_models/bioclimodel/Cmelanopterus")
 
 predictData <- stack(list.files("./data/predictdata/BEM", pattern = ".tif", full.names = TRUE))
 predData.R <- as.data.frame(predictData)
@@ -311,10 +316,12 @@ melanoMap <- rasterize(melanoMapPoints, melanoMap, field = "Presence")
 
 
 plot(melanoMap)
-
+writeRaster(melanoMap, filename = paste0("./data/predictdata/Filtered/BEM_melano.tif"), overwrite = TRUE)
 
 
 # Obesus
+
+FitObesush2oEnsemble <- h2o.load_ensemble("./data/results/h2o_models/bioclimodel/TObesus")
 
 predictData <- stack(list.files("./data/predictdata/BEM", pattern = ".tif", full.names = TRUE))
 predData.R <- as.data.frame(predictData)
@@ -348,7 +355,7 @@ obesusMap <- rasterize(obesusMapPoints, obesusMap, field = "Presence")
 
 
 plot(obesusMap)
-
+writeRaster(obesusMap, filename = paste0("./data/predictdata/Filtered/BEM_obesus.tif"), overwrite = TRUE)
 
 
 # Shut down H2o Cluster
