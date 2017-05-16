@@ -361,17 +361,172 @@ write.csv(tempVar, "./data/calibdata/cellTemperatures.csv", row.names = FALSE)
 
 
 
-######### Generating the predict data ###############
+######### Generating the predict data ##########
 
 
-part20132016 <- nc_open("./data/rawdata/Environment/temp/predict_ZEE_NC/global-analysis-forecast-phy-001-024_1494607691521.nc")
-part20072012 <- nc_open("./data/rawdata/Environment/temp/predict_ZEE_NC/global-analysis-forecast-phy-001-024_1494608068546.nc")
-
-lon <- ncvar_get(part20132016, "longitude")
-lat <- ncvar_get(part20132016, "latitude")
+# Use maybe z-value from the raster layers to split data and make operations
+# Then extract the temp value with the coordinates of the right raster (the one used in the whole study)
+# NB : for the tool, maybe directly work from the extents from the first file downloaded (normally this one)
 
 
-temp1316 <- ncvar_get(part20132016, "thetao") 
-temp0712 <- ncvar_get(part20072012, "thetao") 
-temp <- abind(temp0712,temp1316)
+calTemp <- stack(rev(list.files("./data/rawdata/Environment/temp/New_Caledonia", full.names = TRUE))) # Rev because data is splitted in 2 files and we need the right date orders
+
+dates <- seq(as.Date("2007-01-01"), as.Date("2016-12-31"), by="days")
+dates <- as.character(dates)
+names(calTemp) <- dates
+
+# plot(calTemp[[3653]])
+calTempdf <- as.data.frame(calTemp)
+
+#get the date from the names of the layers and extract the year and month
+indices <- unique(format(as.Date(names(calTemp), format = "X%Y.%m.%d"), format = "%Y.%m"))
+
+# grep(indices[2], names(calTempdf))
+
+
+
+monthlyMean <- sapply(indices, function(ind, data = calTempdf) {
+  
+  monthMean <- apply(data[,grep(ind, names(data))],1, mean)
+  
+  # monthMin <- apply(data[,grep(ind, names(calTempdf))],1, min)
+
+  # monthMax <- apply(data[,grep(ind, names(calTempdf))],1, max)
+  
+  monthMean
+}
+)
+
+monthlyMax <- sapply(indices, function(ind, data = calTempdf) {
+  
+  monthMean <- apply(data[,grep(ind, names(data))],1, max)
+  
+  # monthMin <- apply(data[,grep(ind, names(calTempdf))],1, min)
+  
+  # monthMax <- apply(data[,grep(ind, names(calTempdf))],1, max)
+  
+  monthMean
+}
+)
+
+
+monthlyMin <- sapply(indices, function(ind, data = calTempdf) {
+  
+  monthMean <- apply(data[,grep(ind, names(data))],1, min)
+  
+  # monthMin <- apply(data[,grep(ind, names(calTempdf))],1, min)
+  
+  # monthMax <- apply(data[,grep(ind, names(calTempdf))],1, max)
+  
+  monthMean
+}
+)
+
+meanOfMax <- apply(monthlyMax, 1, mean)
+meanOfMin <- apply(monthlyMin, 1, mean)
+meanOfMean <- apply(monthlyMean, 1, mean)
+
+ncTempVar <- data.frame(Tmin = meanOfMin, Tmax = meanOfMax, Tmean = meanOfMean)
+ncTempVar$Trange <- ncTempVar$Tmax - ncTempVar$Tmin
+ncTempVar <- cbind(as.data.frame(coordinates(calTemp)), ncTempVar)
+ncTempVar <- na.omit(ncTempVar)
+
+ncTempVarSpt <- SpatialPointsDataFrame(
+  coords = cbind(ncTempVar$x, ncTempVar$y),
+  data = ncTempVar,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+)
+
+
+## Extracting the values to the true centroids of cell of grid used for the rest of the study
+
+trueNcTempVar <- data.frame(datToRemove = getValues(eezNcGrid))
+
+#True min
+TminRas <- raster(extent(calTemp))
+res(TminRas) <- res(calTemp)
+projection(TminRas) <- proj4string(calTemp)
+origin(TminRas) <- origin(calTemp)
+TminRas <- rasterize(ncTempVarSpt,field = "Tmin", TminRas)
+# plot(TminRas)
+trueNcTempVar$Tmin <- extract(TminRas, coordinates(eezNcGrid))
+
+#True max
+TminRas <- raster(extent(calTemp))
+res(TminRas) <- res(calTemp)
+projection(TminRas) <- proj4string(calTemp)
+origin(TminRas) <- origin(calTemp)
+TminRas <- rasterize(ncTempVarSpt,field = "Tmax", TminRas)
+# plot(TminRas)
+trueNcTempVar$Tmax <- extract(TminRas, coordinates(eezNcGrid))
+
+
+#True mean
+TminRas <- raster(extent(calTemp))
+res(TminRas) <- res(calTemp)
+projection(TminRas) <- proj4string(calTemp)
+origin(TminRas) <- origin(calTemp)
+TminRas <- rasterize(ncTempVarSpt,field = "Tmean", TminRas)
+# plot(TminRas)
+trueNcTempVar$Tmean <- extract(TminRas, coordinates(eezNcGrid))
+
+
+#True range
+TminRas <- raster(extent(calTemp))
+res(TminRas) <- res(calTemp)
+projection(TminRas) <- proj4string(calTemp)
+origin(TminRas) <- origin(calTemp)
+TminRas <- rasterize(ncTempVarSpt,field = "Trange", TminRas)
+# plot(TminRas)
+trueNcTempVar$Trange <- extract(TminRas, coordinates(eezNcGrid))
+
+
+
+# test[which(is.na(test$datToRemove) == TRUE),] <- NA
+
+#####
+trueNcTempVar[which(is.na(trueNcTempVar$datToRemove) == TRUE),] <- NA # Removing data outside EEZ
+trueNcTempVar <- cbind(coordinates(eezNcGrid), trueNcTempVar)
+trueNcTempVar <- na.omit(trueNcTempVar)
+trueNcTempVar$datToRemove <- NULL
+
+
+
+# @knitr WriteToRast
+
+writeVarToRast <- function(s, map = eezNcGrid){
+  
+  sNoCoords <-  subset(s, select = -c(x,y))
+  
+  substrateSpatial <-  SpatialPointsDataFrame(
+    coords = cbind(s$x, s$y),
+    data = sNoCoords,
+    proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+  
+  featRast <- raster(extent(map))
+  res(featRast) <- res(map)
+  projection(featRast) <- proj4string(map)
+  origin(featRast) <- origin(map)
+  
+  lapply(names(sNoCoords), function(x){
+    
+    rast <- featRast
+    
+    rast <- rasterize(substrateSpatial ,field = x, featRast)
+    
+    writeRaster(rast, filename = paste0("./data/predictdata/BEM", x, ".tif"), overwrite = TRUE)
+    
+    
+  })
+  
+  
+  
+}# eo writeVarToRast
+
+
+writeVarToRast(trueNcTempVar)
+
+
+# plot(raster("./data/predictdata/BEM/Tmean.tif"))
+
 

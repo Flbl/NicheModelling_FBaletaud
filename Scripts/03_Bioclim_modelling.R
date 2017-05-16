@@ -8,6 +8,10 @@ library(h2o)
 library(h2oEnsemble)
 
 
+earthGrid <- raster("./data/interdata/earthGrid.tif")
+eezNcGrid <- raster("./data/interdata/eezNcGrid.tif")
+
+
 ## Reading datasets and binding with temperature cell data
 
 spDatasets <- dir("./data/calibdata/bioclimodel", "*_speciesDataset.csv", full.names = TRUE)
@@ -53,7 +57,21 @@ dat <- lapply(spDatasets, function(tabs, preds = cellTemp) {
 
 library(h2o)
 library(h2oEnsemble)
-h2o.init()
+
+# Initiating h2o
+
+h2o.clust <- tryCatch(h2o.init(startH2O = FALSE),error=function(e){
+  
+  h2o.init(ip = "localhost", port = 54321, startH2O = TRUE,
+           forceDL = FALSE, enable_assertions = TRUE, license = NULL,
+           nthreads = 30, max_mem_size = NULL, min_mem_size = NULL,
+           ice_root = tempdir(), strict_version_check = TRUE,
+           proxy = NA_character_, https = FALSE, insecure = FALSE,
+           cluster_id = NA_integer_, cookies = NA_character_)
+  
+  #h2o.removeAll() # (Optional) Remove all objects in H2O cluster
+  
+})
 
 
 # Carcharhinus amblyrhynchos
@@ -91,7 +109,7 @@ learner <- c("h2o.glm.wrapper", "h2o.randomForest.wrapper",
 metalearner <- "h2o.glm.wrapper"
 
 
-ESAmbly <- h2o.ensemble(x = names(train[-1]), y = "occurrence", 
+FitAmblyh2oEnsemble <- h2o.ensemble(x = names(train[-1]), y = "occurrence", 
                                         training_frame = train,
                                         family = "binomial",
                                         learner = learner,
@@ -103,10 +121,10 @@ ESAmbly <- h2o.ensemble(x = names(train[-1]), y = "occurrence",
 
 
 ## Saving results
-h2o.save_ensemble(ESAmbly , path = "data/results/h2o_models/Camblyrhynchos/" , export_levelone = TRUE , force = TRUE)
+h2o.save_ensemble(FitAmblyh2oEnsemble , path = "data/results/h2o_models/bioclimodel/Camblyrhynchos" , export_levelone = TRUE , force = TRUE)
 
 ### Evaluate Model Performance
-perfAmbly <- h2o.ensemble_performance(ESAmbly, newdata = test)
+perfAmbly <- h2o.ensemble_performance(FitAmblyh2oEnsemble, newdata = test)
 perfAmbly
 print(perfAmbly, metric = "MSE")
 
@@ -145,7 +163,7 @@ train[1:5,]   ## rows 1-5, all columns
 ######### Ensemble Forecasting ###########
 
 
-ESMelano <- h2o.ensemble(x = names(train[-1]), y = "occurrence", 
+FitMelanoh2oEnsemble <- h2o.ensemble(x = names(train[-1]), y = "occurrence", 
                     training_frame = train,
                     family = "binomial",
                     learner = learner,
@@ -157,10 +175,10 @@ ESMelano <- h2o.ensemble(x = names(train[-1]), y = "occurrence",
 
 
 ## Saving results
-h2o.save_ensemble(ESMelano , path = "data/results/h2o_models/Cmelanopterus" , export_levelone = TRUE , force = TRUE)
+h2o.save_ensemble(FitMelanoh2oEnsemble , path = "data/results/h2o_models/bioclimodel/Cmelanopterus" , export_levelone = TRUE , force = TRUE)
 
 ### Evaluate Model Performance
-perfMelano <- h2o.ensemble_performance(ESMelano, newdata = test)
+perfMelano <- h2o.ensemble_performance(FitMelanoh2oEnsemble, newdata = test)
 perfMelano
 print(perfMelano, metric = "MSE")
 
@@ -196,7 +214,7 @@ train[1:5,]   ## rows 1-5, all columns
 ######### Ensemble Forecasting ###########
 
 
-ESObesus <- h2o.ensemble(x = names(train[-1]), y = "occurrence", 
+FitObesush2oEnsemble <- h2o.ensemble(x = names(train[-1]), y = "occurrence", 
                          training_frame = train,
                          family = "binomial",
                          learner = learner,
@@ -208,9 +226,131 @@ ESObesus <- h2o.ensemble(x = names(train[-1]), y = "occurrence",
 
 
 ## Saving results
-h2o.save_ensemble(ESObesus , path = "data/results/h2o_models/TObesus" , export_levelone = TRUE , force = TRUE)
+h2o.save_ensemble(FitObesush2oEnsemble , path = "data/results/h2o_models/bioclimodel/TObesus" , export_levelone = TRUE , force = TRUE)
 
 ### Evaluate Model Performance
-perfObesus <- h2o.ensemble_performance(ESObesus, newdata = test)
+perfObesus <- h2o.ensemble_performance(FitObesush2oEnsemble, newdata = test)
 perfObesus
 print(perfObesus, metric = "MSE")
+
+
+
+
+############ Predicting DATA #############
+
+
+# Amblyrhynchos
+predictData <- stack(list.files("./data/predictdata/BEM", pattern = ".tif", full.names = TRUE))
+predData.R <- as.data.frame(predictData)
+predData.R <- na.omit(predData.R)
+write.csv(predData.R, "./data/predictdata/BEM/predDataBEM.csv", row.names = FALSE)
+predDatah2o <- h2o.importFile("./data/predictdata//BEM/predDataBEM.csv", destination_frame = "predDataBEM", parse = TRUE, header = TRUE,
+                              sep = ",", col.names = NULL, col.types = c("numeric","numeric","numeric","numeric"), na.strings = NULL)
+
+amblyPreds <- predict(FitAmblyh2oEnsemble, predDatah2o)
+
+
+predData.R <- as.data.frame(predictData)
+predData.R <- cbind(as.data.frame(coordinates(predictData)), predData.R)
+predDataCoords <- na.omit(predData.R)
+predDataCoords <- as.matrix(predDataCoords[,c(1:2)])
+
+predictions <- as.data.frame(amblyPreds$pred)
+
+amblyMapPoints <- SpatialPointsDataFrame(
+  coords = predDataCoords,
+  data = predictions,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+
+
+amblyMapGrid <- amblyMapPoints
+gridded(amblyMapGrid) = TRUE
+amblyMapGrid <- as(amblyMapGrid, "SpatialGridDataFrame")
+amblyMap <- raster(amblyMapGrid, values = TRUE)
+amblyMap <- rasterize(amblyMapPoints, amblyMap, field = "Presence")
+
+
+plot(amblyMap)
+
+
+
+
+
+# Melanopterus
+
+predictData <- stack(list.files("./data/predictdata/BEM", pattern = ".tif", full.names = TRUE))
+predData.R <- as.data.frame(predictData)
+predData.R <- na.omit(predData.R)
+write.csv(predData.R, "./data/predictdata/BEM/predDataBEM.csv", row.names = FALSE)
+predDatah2o <- h2o.importFile("./data/predictdata//BEM/predDataBEM.csv", destination_frame = "predDataBEM", parse = TRUE, header = TRUE,
+                              sep = ",", col.names = NULL, col.types = c("numeric","numeric","numeric","numeric"), na.strings = NULL)
+
+melanoPreds <- predict(FitMelanoh2oEnsemble, predDatah2o)
+
+
+predData.R <- as.data.frame(predictData)
+predData.R <- cbind(as.data.frame(coordinates(predictData)), predData.R)
+predDataCoords <- na.omit(predData.R)
+predDataCoords <- as.matrix(predDataCoords[,c(1:2)])
+
+predictions <- as.data.frame(melanoPreds$pred)
+
+melanoMapPoints <- SpatialPointsDataFrame(
+  coords = predDataCoords,
+  data = predictions,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+
+
+melanoMapGrid <- melanoMapPoints
+gridded(melanoMapGrid) = TRUE
+melanoMapGrid <- as(melanoMapGrid, "SpatialGridDataFrame")
+melanoMap <- raster(melanoMapGrid, values = TRUE)
+melanoMap <- rasterize(melanoMapPoints, melanoMap, field = "Presence")
+
+
+plot(melanoMap)
+
+
+
+# Obesus
+
+predictData <- stack(list.files("./data/predictdata/BEM", pattern = ".tif", full.names = TRUE))
+predData.R <- as.data.frame(predictData)
+predData.R <- na.omit(predData.R)
+write.csv(predData.R, "./data/predictdata/BEM/predDataBEM.csv", row.names = FALSE)
+predDatah2o <- h2o.importFile("./data/predictdata//BEM/predDataBEM.csv", destination_frame = "predDataBEM", parse = TRUE, header = TRUE,
+                              sep = ",", col.names = NULL, col.types = c("numeric","numeric","numeric","numeric"), na.strings = NULL)
+
+obesusPreds <- predict(FitObesush2oEnsemble, predDatah2o)
+
+
+predData.R <- as.data.frame(predictData)
+predData.R <- cbind(as.data.frame(coordinates(predictData)), predData.R)
+predDataCoords <- na.omit(predData.R)
+predDataCoords <- as.matrix(predDataCoords[,c(1:2)])
+
+predictions <- as.data.frame(obesusPreds$pred)
+
+obesusMapPoints <- SpatialPointsDataFrame(
+  coords = predDataCoords,
+  data = predictions,
+  proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+
+
+obesusMapGrid <- obesusMapPoints
+gridded(obesusMapGrid) = TRUE
+obesusMapGrid <- as(obesusMapGrid, "SpatialGridDataFrame")
+obesusMap <- raster(obesusMapGrid, values = TRUE)
+obesusMap <- rasterize(obesusMapPoints, obesusMap, field = "Presence")
+
+
+plot(obesusMap)
+
+
+
+# Shut down H2o Cluster
+h2o.shutdown()
+Y
