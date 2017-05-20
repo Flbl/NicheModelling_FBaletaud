@@ -15,13 +15,13 @@ library(raster)
 library(rgeos)
 
 
-library(ggmap)
-library(dplyr)
-library(stringr)
-library(readr)
-library(pryr)
-library(marmap)
-library(lubridate)
+# library(ggmap)
+# library(dplyr)
+# library(stringr)
+# library(readr)
+# library(pryr)
+# library(marmap)
+# library(lubridate)
 
 
 

@@ -4,27 +4,27 @@
 ##                                                             ##
 #################################################################
 
-library(rgbif)
+# library(rgbif)
 library(taxize)
 library(taxizesoap)
 library(devtools)
 library(robis)
-library(leaflet)
-library(tibble)
+# library(leaflet)
+# library(tibble)
 library(rgdal)
 library(dplyr)
 library(sp)
 
-library(ggmap)
-library(dplyr)
-library(ncdf4)
-library(raster)
-library(stringr)
-library(readr)
-library(pryr)
-library(marmap)
-library(lubridate)
-library(rgeos)
+# library(ggmap)
+# library(dplyr)
+# library(ncdf4)
+# library(raster)
+# library(stringr)
+# library(readr)
+# library(pryr)
+# library(marmap)
+# library(lubridate)
+# library(rgeos)
 
 
 # @knitr LoadMaps
